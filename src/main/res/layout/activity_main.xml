@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    tools:context=".MainActivity">
+
+    <!-- Tiêu đề ứng dụng -->
+    <TextView
+        android:id="@+id/app_title"
+        android:text="Đăng nhập bằng Google"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="32dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <!-- Nút đăng nhập bằng Google -->
+    <Button
+        android:id="@+id/sign_in_button"
+        android:text="Đăng nhập bằng Google"
+        android:backgroundTint="#4285F4"
+        android:textColor="#FFFFFF"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/ic_google"
+        android:drawablePadding="8dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:minHeight="48dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Liên kết tạo tài khoản Google -->
+    <TextView
+        android:id="@+id/register_text"
+        android:text="Chưa có tài khoản? Tạo tài khoản Google"
+        android:textColor="#1A73E8"
+        android:textSize="14sp"
+        android:autoLink="web"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>
