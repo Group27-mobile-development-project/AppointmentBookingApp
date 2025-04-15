@@ -1,17 +1,27 @@
 import React from 'react';
-import { Button } from 'react-native';
+import { Button, View, StyleSheet } from 'react-native';
 import useGoogleLogin from '../auth/GoogleLogin';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ onLogin }) {
   const { promptAsync, request } = useGoogleLogin(() => {
-    navigation.replace('Home');
+    onLogin(); // update login state
   });
 
   return (
-    <Button
-      title="Sign in with Google"
-      onPress={() => promptAsync()}
-      disabled={!request}
-    />
+    <View style={styles.container}>
+      <Button
+        title="Sign in with Google"
+        onPress={() => promptAsync()}
+        disabled={!request}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
