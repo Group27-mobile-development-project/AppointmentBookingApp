@@ -10,7 +10,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function useGoogleLogin(onLoginSuccess) {
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: '',
+    clientId: '25174112196-lau8ip66flldo88ql5d91pigdgfv1aua.apps.googleusercontent.com',
     useProxy: true,
     redirectUri: AuthSession.makeRedirectUri({ useProxy: true }),
     scopes: ['openid', 'profile', 'email'],
