@@ -1,4 +1,4 @@
-# Collection: users
+# Collection: users + userId is google accound sub
 users/{userId} {
   name: string,
   email: string,

@@ -1,23 +1,35 @@
 // src/screens/CreateBusinessScreen.js
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { db } from '../firebaseConfig';
-import { doc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import uuid from 'react-native-uuid';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function CreateBusinessScreen({ navigation }) {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
 
   const handleCreate = async () => {
+    if (!name.trim()) {
+      Alert.alert('Business name must not be empty');
+      return;
+    }
+
     const user = getAuth().currentUser;
-    if (!user) return; 
+    if (!user) return;
+
+    const googleSub = await AsyncStorage.getItem('google_sub');
+    if (!googleSub) {
+      Alert.alert('Unable to identify Google user. Please re-login.');
+      return;
+    }
 
     const businessId = uuid.v4();
     const businessRef = doc(db, 'businesses', businessId);
     await setDoc(businessRef, {
-      user_id: user.uid,
+      user_id: googleSub,
       category_ids: [],
       name,
       description: desc,
@@ -28,12 +40,7 @@ export default function CreateBusinessScreen({ navigation }) {
       saved_at: serverTimestamp()
     });
 
-    if (!name.trim()) {
-        alert('Business name must not be empty');
-        return;
-      }
-
-    alert('Your business is created successfully!');
+    Alert.alert('Your business is created successfully!');
     navigation.goBack();
   };
 

@@ -1,9 +1,9 @@
 // src/screens/MyBusinessesScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Button, StyleSheet } from 'react-native';
-import { getAuth } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function MyBusinessesScreen({ navigation }) {
   const [businesses, setBusinesses] = useState([]);
@@ -11,12 +11,12 @@ export default function MyBusinessesScreen({ navigation }) {
 
   useEffect(() => {
     const fetchBusinesses = async () => {
-      const user = getAuth().currentUser;
-      if (!user) return;
+      const googleSub = await AsyncStorage.getItem('google_sub');
+      if (!googleSub) return;
 
       const q = query(
         collection(db, 'businesses'),
-        where('user_id', '==', user.uid)
+        where('user_id', '==', googleSub)
       );
 
       const snapshot = await getDocs(q);

@@ -43,10 +43,7 @@ export default function SearchScreen({ navigation }) {
             <Text>{item.description}</Text>
             <Button
               title="View Detail"
-              onPress={() => {
-                // Redirecting to BookingScreen in the future
-                alert(`Chose: ${item.name}`);
-              }}
+              onPress={() => navigation.navigate('Booking', { businessId: item.id })}
             />
           </View>
         )}
