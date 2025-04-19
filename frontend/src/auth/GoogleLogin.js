@@ -6,15 +6,20 @@ import { db } from '../firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import * as AuthSession from 'expo-auth-session';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EXPO_CLIENT_ID } from '@env'
+import { ANDROID_CLIENT_ID } from '@env';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function useGoogleLogin(onLoginSuccess) {
+  const redirectUri = AuthSession.makeRedirectUri({
+    native: 'booking27://redirect',
+    useProxy: false
+  });
+  
   const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId: EXPO_CLIENT_ID,
-    useProxy: true,
-    redirectUri: AuthSession.makeRedirectUri({ useProxy: true }),
+    clientId: ANDROID_CLIENT_ID,
+    redirectUri,
+    useProxy: false,
     scopes: ['openid', 'profile', 'email', 'https://www.googleapis.com/auth/calendar'],
   });
 
@@ -36,10 +41,8 @@ export default function useGoogleLogin(onLoginSuccess) {
 
           const userId = userInfo.sub;
 
-          // Save userId (sub) locally
           await AsyncStorage.setItem('google_sub', userId);
 
-          // Save user info
           const userRef = doc(db, 'users', userId);
           await setDoc(userRef, {
             sub: userInfo.sub,
@@ -49,7 +52,6 @@ export default function useGoogleLogin(onLoginSuccess) {
             saved_at: serverTimestamp()
           }, { merge: true });
 
-          // Save token
           const tokenRef = doc(db, 'users', userId, 'google_tokens', 'latest');
           await setDoc(tokenRef, {
             access_token: accessToken,
@@ -65,6 +67,10 @@ export default function useGoogleLogin(onLoginSuccess) {
           }
         })
         .catch((err) => console.error('Fetch Google userinfo error:', err));
+    }
+
+    if (response?.type === 'error') {
+      console.error('Google login error:', response);
     }
   }, [response]);
 
