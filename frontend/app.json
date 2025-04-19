@@ -40,6 +40,14 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "googleServicesFile": "./android/app/google-services.json"
+          }
+        }
       ]
     ],
     "experiments": {

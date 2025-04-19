@@ -11,7 +11,7 @@ export default function LoginScreen({ navigation }) {
   });
   return (
     <Button
-      title="Sign in with Google"
+      title="Sign in with Google now"
       onPress={() => promptAsync()}
       disabled={!request}
     />
