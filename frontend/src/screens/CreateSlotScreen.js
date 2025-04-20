@@ -13,7 +13,6 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import uuid from 'react-native-uuid';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 
 export default function CreateSlotScreen({ navigation }) {
@@ -28,10 +27,7 @@ export default function CreateSlotScreen({ navigation }) {
       const user = getAuth().currentUser;
       if (!user) return;
 
-      const googleSub = await AsyncStorage.getItem('google_sub');
-      if (!googleSub) return;
-
-      const q = query(collection(db, 'businesses'), where('user_id', '==', googleSub));
+      const q = query(collection(db, 'businesses'), where('user_id', '==', user.uid));
       const snapshot = await getDocs(q);
       const result = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setBusinesses(result);
@@ -47,11 +43,15 @@ export default function CreateSlotScreen({ navigation }) {
       return;
     }
 
-    // Checking permission
-    const googleSub = await AsyncStorage.getItem('google_sub');
+    const user = getAuth().currentUser;
+    if (!user) {
+      Alert.alert('User not authenticated');
+      return;
+    }
+
     const q = query(
       collection(db, 'businesses'),
-      where('user_id', '==', googleSub),
+      where('user_id', '==', user.uid),
       where('__name__', '==', selectedBusiness)
     );
     const snapshot = await getDocs(q);

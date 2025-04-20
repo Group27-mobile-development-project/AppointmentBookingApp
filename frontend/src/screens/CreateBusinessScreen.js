@@ -5,7 +5,6 @@ import { db } from '../firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import uuid from 'react-native-uuid';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function CreateBusinessScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -18,18 +17,16 @@ export default function CreateBusinessScreen({ navigation }) {
     }
 
     const user = getAuth().currentUser;
-    if (!user) return;
-
-    const googleSub = await AsyncStorage.getItem('google_sub');
-    if (!googleSub) {
-      Alert.alert('Unable to identify Google user. Please re-login.');
+    if (!user) {
+      Alert.alert('You must be logged in to create a business');
       return;
     }
 
     const businessId = uuid.v4();
     const businessRef = doc(db, 'businesses', businessId);
+
     await setDoc(businessRef, {
-      user_id: googleSub,
+      user_id: user.uid,
       category_ids: [],
       name,
       description: desc,

@@ -1,10 +1,8 @@
-// src/screens/MyAppoinmentsScreen.js
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Button, Alert } from 'react-native';
 import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
 
 export default function MyAppointmentsScreen() {
   const [appointments, setAppointments] = useState([]);
@@ -15,45 +13,43 @@ export default function MyAppointmentsScreen() {
   }, []);
 
   const fetchAppointments = async () => {
-    const googleSub = await AsyncStorage.getItem('google_sub');
-    if (!googleSub) {
-      console.warn('Missing google_sub');
+    const user = getAuth().currentUser;
+    if (!user) {
+      console.warn('No authenticated user');
       return;
     }
 
     const q = query(
       collection(db, 'appointments'),
-      where('user_id', '==', googleSub)
+      where('user_id', '==', user.uid)
     );
 
     const snapshot = await getDocs(q);
     const enriched = await Promise.all(snapshot.docs.map(async docSnap => {
       const data = docSnap.data();
-    
+
       // Get slot info
       const slotRef = doc(db, 'businesses', data.business_id, 'slots', data.slot_id);
       const slotSnap = await getDoc(slotRef);
       const slotName = slotSnap.exists() ? slotSnap.data().name : 'Unknown Slot';
-    
+
       // Get business info
       const bizRef = doc(db, 'businesses', data.business_id);
       const bizSnap = await getDoc(bizRef);
       const businessData = bizSnap.exists() ? bizSnap.data() : null;
       const businessName = businessData ? businessData.name : 'Unknown Business';
       const businessOwnerId = businessData?.user_id;
-    
+
       // Get customer name
       const userRef = doc(db, 'users', data.user_id);
       const userSnap = await getDoc(userRef);
-      console.log('ten khach' + userSnap.data())
       const customerName = userSnap.exists() ? userSnap.data().name : 'Unknown Customer';
-    
+
       // Get business owner name
       const servicerRef = businessOwnerId ? doc(db, 'users', businessOwnerId) : null;
       const servicerSnap = servicerRef ? await getDoc(servicerRef) : null;
-      console.log('ten business' + servicerSnap.data())
       const servicerName = servicerSnap?.exists() ? servicerSnap.data().name : 'Unknown Servicer';
-    
+
       return {
         id: docSnap.id,
         ...data,
@@ -69,9 +65,8 @@ export default function MyAppointmentsScreen() {
   };
 
   const handleDelete = async (appointmentId) => {
-    // Using confirm() to run on web
     const isWeb = typeof window !== 'undefined';
-  
+
     if (isWeb) {
       const confirmed = window.confirm('Are you sure you want to delete this appointment?');
       if (!confirmed) return;
@@ -84,7 +79,6 @@ export default function MyAppointmentsScreen() {
         window.alert('Error deleting appointment');
       }
     } else {
-      // Native devices (Android/iOS)
       Alert.alert(
         'Delete Appointment',
         'Are you sure you want to delete this appointment?',
@@ -108,7 +102,7 @@ export default function MyAppointmentsScreen() {
       );
     }
   };
-  
+
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
 
   return (

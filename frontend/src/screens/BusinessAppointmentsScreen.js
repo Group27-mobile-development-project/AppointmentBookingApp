@@ -1,4 +1,4 @@
-//src/screens/BusinessAppointmentsScreen.js
+// src/screens/BusinessAppointmentsScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, Alert, ActivityIndicator } from 'react-native';
 import { getAuth } from 'firebase/auth';
@@ -12,7 +12,6 @@ import {
   updateDoc
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function BusinessAppointmentsScreen() {
   const [appointments, setAppointments] = useState([]);
@@ -21,18 +20,16 @@ export default function BusinessAppointmentsScreen() {
   useEffect(() => {
     const fetchAppointments = async () => {
       const user = getAuth().currentUser;
-      if (!user) return;
-
-      const googleSub = await AsyncStorage.getItem('google_sub');
-      if (!googleSub) {
-        console.warn('Google_sub not found');
+      if (!user) {
+        Alert.alert('You must be logged in to view your business appointments.');
         return;
       }
 
-      const businessQuery = query(collection(db, 'businesses'), where('user_id', '==', googleSub));
+      const businessQuery = query(collection(db, 'businesses'), where('user_id', '==', user.uid));
       const businessSnapshot = await getDocs(businessQuery);
       if (businessSnapshot.empty) {
         Alert.alert('You do not have any business.');
+        setLoading(false);
         return;
       }
 
@@ -77,7 +74,6 @@ export default function BusinessAppointmentsScreen() {
         };
       }));
 
-
       setAppointments(enriched);
       setLoading(false);
     };
@@ -109,18 +105,18 @@ export default function BusinessAppointmentsScreen() {
             <Text>Status: {item.status}</Text>
 
             {item.status === 'pending' && (
-                <>
-                    <Button
-                    title="Confirm"
-                    onPress={() => updateStatus(item.id, 'confirmed')}
-                    />
-                    <View style={{ height: 8 }} />
-                    <Button
-                    title="Cancel"
-                    onPress={() => updateStatus(item.id, 'cancelled')}
-                    color="red"
-                    />
-                </>
+              <>
+                <Button
+                  title="Confirm"
+                  onPress={() => updateStatus(item.id, 'confirmed')}
+                />
+                <View style={{ height: 8 }} />
+                <Button
+                  title="Cancel"
+                  onPress={() => updateStatus(item.id, 'cancelled')}
+                  color="red"
+                />
+              </>
             )}
           </View>
         )}
