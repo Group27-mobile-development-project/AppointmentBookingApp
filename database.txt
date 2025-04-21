@@ -1,10 +1,12 @@
-# Collection: users + userId is google accound sub
+# Collection: users + userId is uid
 users/{userId} {
   name: string,
   email: string,
   phone: string,
+  image_url: string,
   saved_at: timestamp
 }
+
       # Google_tokens:
       users/{userId}/google_tokens/{tokenId} {
         access_token: string,
@@ -24,6 +26,7 @@ businesses/{businessId} {
   contact_email: string,
   contact_phone: string,
   google_calendar_id: string,
+  image_url: string,
   saved_at: timestamp
 }
 
@@ -34,6 +37,7 @@ businesses/{businessId} {
         saved_at: timestamp,
         duration_min: number,
         category_id: string,
+        image_url: string,
         is_active: boolean
       }
 

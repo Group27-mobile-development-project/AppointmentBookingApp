@@ -43,11 +43,8 @@ export default function HomeScreen({ navigation }) {
 
       <Button title="Search Businesses" onPress={() => navigation.navigate('Search')} />
       <Button title="My Business" onPress={() => navigation.navigate('MyBusinesses')} />
-      <Button title="Create New Business" onPress={() => navigation.navigate('CreateBusiness')} />
-      <Button title="Create Slot" onPress={() => navigation.navigate('CreateSlot')} />
       <Button title="My Appointments" onPress={() => navigation.navigate('MyAppointments')} />
       <Button title="Business Appointments" onPress={() => navigation.navigate('BusinessAppointments')} />
-      
       <View style={{ marginTop: 30 }}>
         <Button title="Log Out" color="red" onPress={handleLogout} />
       </View>

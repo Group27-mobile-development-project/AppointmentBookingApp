@@ -10,7 +10,11 @@ import SearchScreen from './src/screens/SearchScreen';
 import BookingScreen from './src/screens/BookingScreen';
 import CreateSlotScreen from './src/screens/CreateSlotScreen';
 import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
-import BusinessAppointmentsScreen from './src/screens/BusinessAppointmentsScreen';
+import BusinessAppointmentsScreen from './src/screens/BusinessAppointmentsScreen'
+import BusinessScreen from './src/screens/BusinessScreen';
+
+// ...
+
 
 const Stack = createNativeStackNavigator();
 
@@ -27,6 +31,7 @@ export default function App() {
         <Stack.Screen name="CreateSlot" component={CreateSlotScreen} />
         <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
         <Stack.Screen name="BusinessAppointments" component={BusinessAppointmentsScreen} />
+        <Stack.Screen name="Business" component={BusinessScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

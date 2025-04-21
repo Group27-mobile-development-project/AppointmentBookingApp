@@ -42,6 +42,10 @@ export default function MyBusinessesScreen({ navigation }) {
           <View style={styles.businessCard}>
             <Text style={styles.title}>{item.name}</Text>
             <Text style={styles.desc}>{item.description}</Text>
+            <Button
+              title="View Detail"
+              onPress={() => navigation.navigate('Business', { businessId: item.id })}
+            />            
           </View>
         )}
       />
