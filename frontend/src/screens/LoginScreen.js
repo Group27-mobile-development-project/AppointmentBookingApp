@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
 import useEmailAuth from '../auth/useEmailAuth';
@@ -65,3 +66,4 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, padding: 8, marginVertical: 6, borderRadius: 4 },
   switchText: { color: 'blue', marginTop: 12, textAlign: 'center' }
 });
+
