@@ -75,12 +75,12 @@ export default function CreateBusinessScreen({ navigation }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <TextInput placeholder="Business Name" value={name} onChangeText={setName} style={styles.input} />
-      <TextInput placeholder="Description" value={desc} onChangeText={setDesc} style={styles.input} />
-      <TextInput placeholder="Location" value={location} onChangeText={setLocation} style={styles.input} />
-      <TextInput placeholder="Contact Email" value={contactEmail} onChangeText={setContactEmail} keyboardType="email-address" style={styles.input} />
-      <TextInput placeholder="Contact Phone" value={contactPhone} onChangeText={setContactPhone} keyboardType="phone-pad" style={styles.input} />
-      <TextInput placeholder="Google Calendar ID (optional)" value={googleCalendarId} onChangeText={setGoogleCalendarId} style={styles.input} />
+      <TextInput placeholder="Business Name" placeholderTextColor="#888" value={name} onChangeText={setName} style={styles.input} />
+      <TextInput placeholder="Description" placeholderTextColor="#888" value={desc} onChangeText={setDesc} style={styles.input} />
+      <TextInput placeholder="Location" placeholderTextColor="#888" value={location} onChangeText={setLocation} style={styles.input} />
+      <TextInput placeholder="Contact Email" placeholderTextColor="#888" value={contactEmail} onChangeText={setContactEmail} keyboardType="email-address" style={styles.input} />
+      <TextInput placeholder="Contact Phone" placeholderTextColor="#888" value={contactPhone} onChangeText={setContactPhone} keyboardType="phone-pad" style={styles.input} />
+      <TextInput placeholder="Google Calendar ID (optional)" placeholderTextColor="#888" value={googleCalendarId} onChangeText={setGoogleCalendarId} style={styles.input} />
 
       <Text style={styles.label}>Select Categories:</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>

@@ -16,8 +16,8 @@ export default function BusinessScreen({ route, navigation }) {
   const [editing, setEditing] = useState(false);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [showServices, setShowServices] = useState(true);
 
-  // Editable fields state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
@@ -105,17 +105,14 @@ export default function BusinessScreen({ route, navigation }) {
   };
 
   const renderHeader = () => (
-    <>
+    <View>
+      <View style={styles.reminderBanner}>
+        <Text style={styles.reminderText}>Business Info</Text>
+      </View>
+
       {business.image_url && (
         <Image source={{ uri: business.image_url }} style={styles.coverImage} />
       )}
-      {isOwner && (
-        <TouchableOpacity onPress={handleChangeCoverImage} style={styles.changeImageBtn}>
-          <Text style={{ color: '#2196f3' }}>Change Cover Image</Text>
-        </TouchableOpacity>
-      )}
-
-      <Text style={styles.title}>Business Info</Text>
 
       {editing ? (
         <>
@@ -129,10 +126,7 @@ export default function BusinessScreen({ route, navigation }) {
           {categories.map(cat => (
             <TouchableOpacity
               key={cat.id}
-              style={[
-                styles.categoryButton,
-                selectedCategories.includes(cat.id) && styles.categoryButtonSelected
-              ]}
+              style={[styles.categoryButton, selectedCategories.includes(cat.id) && styles.categoryButtonSelected]}
               onPress={() => toggleCategory(cat.id)}
             >
               <Text style={selectedCategories.includes(cat.id) ? styles.categoryTextSelected : null}>
@@ -143,124 +137,189 @@ export default function BusinessScreen({ route, navigation }) {
           <Button title="Save" onPress={handleUpdateBusiness} color="#2196f3" />
         </>
       ) : (
-        <>
+        <View>
           <Text>Name: {business.name}</Text>
           <Text>Description: {business.description}</Text>
           <Text>Location: {business.location}</Text>
-          <Text>Contact: {business.contact_email} | {business.contact_phone}</Text>
+          <Text>Contact: {business.contact_email}</Text>
+          <Text>Phone: {business.contact_phone}</Text>
           <Text style={{ marginTop: 8 }}>Categories:</Text>
           {categories
             .filter(cat => (business.category_ids || []).includes(cat.id))
             .map(cat => <Text key={cat.id}>• {cat.name}</Text>)}
-          {isOwner && <Button title="Edit Info" onPress={startEditing} />}
-        </>
+
+          {isOwner && (
+            <TouchableOpacity
+              onPress={startEditing}
+              style={styles.cardBtn}
+            >
+              <Text style={styles.cardBtnText}>Edit Info</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )}
 
-      <Text style={styles.title}>Services</Text>
-    </>
+      {isOwner && !editing && (
+        <View style={styles.editInfoContainer}>
+          <TouchableOpacity
+            onPress={handleChangeCoverImage}
+            style={styles.coverImageBtn}
+          >
+            <Text style={styles.coverImageBtnText}>Change Cover Image</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={{ height: 30 }} />
+
+      <TouchableOpacity
+        style={styles.reminderBanner}
+        onPress={() => setShowServices(prev => !prev)}
+      >
+        <Text style={styles.reminderText}>
+          {showServices ? '▼ Services' : '▶ Services'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 
   if (!business) return <Text style={{ padding: 20 }}>Loading...</Text>;
 
   return (
-    <FlatList
-      ListHeaderComponent={
-        <View style={styles.headerContainer}>
-          {renderHeader()}
-        </View>
-      }
-      data={slots}
-      keyExtractor={item => item.id}
-      renderItem={({ item }) => (
-        <View style={styles.slotCard}>
-          <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
-          <Text>{item.description}</Text>
-          <Text>Duration: {item.duration_min} min</Text>
-        </View>
+    <View style={{ flex: 1 }}>
+      <FlatList
+        ListHeaderComponent={renderHeader()}
+        data={showServices ? slots : []}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.slotCard}>
+            <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
+            <Text>{item.description}</Text>
+            <Text>Duration: {item.duration_min} min</Text>
+          </View>
+        )}
+        ListEmptyComponent={showServices ? <Text>No services yet</Text> : null}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      />
+
+      {isOwner ? (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CreateSlot', { businessId })}
+          style={styles.floatingButton}
+        >
+          <Text style={styles.floatingButtonText}>Create New Service</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Booking', { businessId })}
+          style={[styles.floatingButton, { backgroundColor: 'black' }]}
+        >
+          <Text style={styles.floatingButtonText}>Book Now</Text>
+        </TouchableOpacity>
       )}
-      ListEmptyComponent={<Text>No services yet</Text>}
-      ListFooterComponent={
-        <View style={styles.footer}>
-          {isOwner ? (
-            <Button
-              title="Create New Service"
-              onPress={() => navigation.navigate('CreateSlot', { businessId })}
-              color="#4caf50"
-            />
-          ) : (
-            <Button
-              title="Book Now"
-              onPress={() => navigation.navigate('Booking', { businessId })}
-              color="#3b82f6"
-            />
-          )}
-        </View>
-      }
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    />
+    </View>
   );
-   
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    paddingBottom: 80
+    paddingBottom: 100,
+    backgroundColor: 'transparent',
   },
-  headerContainer: {
-    marginBottom: 16
+  reminderBanner: {
+    backgroundColor: '#343a40',
+    paddingVertical: 12,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  footer: {
-    marginTop: 16,
-    marginBottom: 80
-  },
-  title: {
-    fontSize: 18,
+  reminderText: {
+    color: '#fff',
     fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8
+    fontSize: 16,
   },
   subTitle: {
     fontWeight: 'bold',
     marginTop: 16,
-    marginBottom: 6
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
     padding: 8,
     marginBottom: 8,
-    borderRadius: 4
+    borderRadius: 4,
   },
   slotCard: {
-    padding: 10,
+    padding: 8,
     marginBottom: 12,
-    backgroundColor: '#eee',
-    borderRadius: 6
+    backgroundColor: '#eaeaea',
+    borderRadius: 6,
   },
   categoryButton: {
     padding: 10,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#aaa',
-    marginBottom: 8
+    marginBottom: 8,
   },
   categoryButtonSelected: {
     backgroundColor: '#4caf50',
-    borderColor: '#388e3c'
+    borderColor: '#388e3c',
   },
   categoryTextSelected: {
     color: 'white',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   coverImage: {
     width: '100%',
     height: 180,
     borderRadius: 8,
-    marginBottom: 12
+    marginBottom: 12,
   },
-  changeImageBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 8
-  }
+  editInfoContainer: {
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  coverImageBtn: {
+    backgroundColor: '#0288d1',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  coverImageBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  cardBtn: {
+    backgroundColor: '#388e3c',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    marginTop: 12,
+  },
+  cardBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'black',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    elevation: 4,
+  },
+  floatingButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

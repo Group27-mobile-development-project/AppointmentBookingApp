@@ -1,11 +1,17 @@
-
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import useEmailAuth from '../auth/useEmailAuth';
 
 export default function LoginScreen({ navigation }) {
   const { signIn, signUp } = useEmailAuth((uid) => {
-    if (uid) navigation.replace('Home', { userId: uid });
+    if (uid) navigation.replace('MainTabs', { userId: uid });
   });
 
   const [email, setEmail] = useState('');
@@ -14,9 +20,6 @@ export default function LoginScreen({ navigation }) {
   const [name, setName] = useState('');
 
   const handleAuth = async () => {
-    console.log('[AUTH ACTION]', isSignup ? 'SIGNUP' : 'LOGIN');
-    console.log('Email:', email);
-    console.log('Password:', password);
     try {
       if (isSignup) {
         await signUp(email, password, name);
@@ -30,12 +33,15 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Welcome to BookingApp</Text>
+
       {isSignup && (
         <TextInput
           placeholder="Name"
           value={name}
           onChangeText={setName}
           style={styles.input}
+          placeholderTextColor="#888"
         />
       )}
       <TextInput
@@ -45,6 +51,7 @@ export default function LoginScreen({ navigation }) {
         keyboardType="email-address"
         autoCapitalize="none"
         style={styles.input}
+          placeholderTextColor="#888"
       />
       <TextInput
         placeholder="Password"
@@ -52,18 +59,61 @@ export default function LoginScreen({ navigation }) {
         onChangeText={setPassword}
         secureTextEntry
         style={styles.input}
+          placeholderTextColor="#888"
       />
-      <Button title={isSignup ? "Sign Up" : "Login"} onPress={handleAuth} />
+
+      <TouchableOpacity style={styles.button} onPress={handleAuth}>
+        <Text style={styles.buttonText}>
+          {isSignup ? 'Sign Up' : 'Login'}
+        </Text>
+      </TouchableOpacity>
+
       <Text style={styles.switchText} onPress={() => setIsSignup(!isSignup)}>
-        {isSignup ? "Already have an account? Login" : "No account? Sign up"}
+        {isSignup
+          ? 'Already have an account? Login'
+          : 'No account? Sign up'}
       </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, flex: 1, justifyContent: 'center' },
-  input: { borderWidth: 1, padding: 8, marginVertical: 6, borderRadius: 4 },
-  switchText: { color: 'blue', marginTop: 12, textAlign: 'center' }
+  container: {
+    padding: 16,
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  input: {
+    borderWidth: 1,
+    padding: 8,
+    marginVertical: 6,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    color: '#000',
+  },
+  button: {
+    backgroundColor: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  switchText: {
+    color: 'blue',
+    marginTop: 12,
+    textAlign: 'center',
+  },
 });
-
