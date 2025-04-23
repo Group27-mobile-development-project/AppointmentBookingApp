@@ -9,10 +9,14 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import useEmailAuth from '../auth/useEmailAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen({ navigation }) {
-  const { signIn, signUp } = useEmailAuth((uid) => {
-    if (uid) navigation.replace('MainTabs', { userId: uid });
+  const { signIn, signUp } = useEmailAuth(async (uid) => {
+    if (uid) {
+      await AsyncStorage.setItem('userId', uid);
+      navigation.replace('MainTabs', { userId: uid });
+    }
   });
 
   const [email, setEmail] = useState('');

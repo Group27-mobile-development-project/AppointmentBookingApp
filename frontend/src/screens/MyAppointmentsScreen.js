@@ -1,4 +1,5 @@
 // src/screen/MyAppointmentsScreen.js
+import { Button } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -135,46 +136,41 @@ export default function MyAppointmentsScreen() {
       <FlatList
         data={appointments}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Image
-                source={{ uri: 'https://via.placeholder.com/50' }}
-                style={styles.avatar}
-              />
-              <View>
-                <Text style={styles.businessName}>{item.businessName}</Text>
-                <Text style={styles.dateText}>
-                  {new Date(item.start_time.seconds * 1000).toLocaleString()}
-                </Text>
+        renderItem={({ item }) => {
+          return (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Image
+                  source={{ uri: 'https://via.placeholder.com/50' }}
+                  style={styles.avatar}
+                />
+                <View>
+                  <Text style={styles.businessName}>{item.businessName}</Text>
+                  <Text style={styles.dateText}>
+                    {new Date(item.start_time.seconds * 1000).toLocaleString()}
+                  </Text>
+                </View>
+              </View>
+        
+              <View style={styles.cardDetails}>
+                <Text style={styles.detailText}>Customer: {item.customerName}</Text>
+                <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
+                <Text style={styles.detailText}>Slot: {item.slotName}</Text>
+                <Text style={styles.detailText}>Status: {item.status}</Text>
+                {renderCountdown(item.start_time)}
+              </View>
+        
+              <View style={{ marginTop: 8 }}>
+                {(item.status !== 'completed') && (
+                  <Button title="Delete" color="red" onPress={() => handleDelete(item)} />
+                )}
+                {item.status === 'completed' && (
+                  <Button title="Leave a Review" onPress={() => Alert.alert('Review', 'Leave a review feature coming soon!')} />
+                )}
               </View>
             </View>
-
-            <View style={styles.cardDetails}>
-              <Text style={styles.detailText}>Customer: {item.customerName}</Text>
-              <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
-              <Text style={styles.detailText}>Slot: {item.slotName}</Text>
-              <Text style={styles.detailText}>Status: {item.status}</Text>
-
-            {renderCountdown(item.start_time)}
-
-            <View style={{ marginTop: 8 }}>
-              {(item.status !== 'completed') && (
-                <Button title="Delete" color="red" onPress={() => handleDelete(item)} />
-              )}
-              {item.status === 'completed' && (
-                <Button title="Leave a Review" onPress={() => Alert.alert('Review', 'Leave a review feature coming soon!')} />
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => handleDelete(item.id)}
-            >
-              <Text style={styles.deleteText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          );
+        }}        
         ListEmptyComponent={
           <Text style={styles.empty}>You don't have any appointments.</Text>
         }

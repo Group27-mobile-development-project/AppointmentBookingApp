@@ -61,6 +61,12 @@ export default function MyBusinessesScreen({ navigation }) {
       >
         <Text style={styles.createBtnText}>Register Business</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('BusinessAppointments')}
+        style={styles.businessAppointmentsBtn}
+      >
+        <Text style={styles.businessAppointmentsBtnText}>All Business Appointments</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -117,5 +123,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600'
-  }
+  },
+  businessAppointmentsBtn: {
+    backgroundColor: '#444',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  businessAppointmentsBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
