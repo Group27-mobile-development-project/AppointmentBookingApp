@@ -1,47 +1,48 @@
 // src/screen/SearchScreen.js
 import React, { useState, useEffect } from 'react';
 import {
-  View, TextInput, FlatList, Text, StyleSheet, Button, TouchableOpacity, ScrollView
+  View, Text, TextInput, FlatList, TouchableOpacity,
+  ScrollView, StyleSheet
 } from 'react-native';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 export default function SearchScreen({ navigation }) {
   const [keyword, setKeyword] = useState('');
-  const [results, setResults] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [results, setResults] = useState([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       const snapshot = await getDocs(collection(db, 'categories'));
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCategories(list);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCategories(data);
     };
     fetchCategories();
   }, []);
 
   const toggleCategory = (id) => {
     setSelectedCategories(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter(cat => cat !== id)
+        : [...prev, id]
     );
   };
 
   const handleSearch = async () => {
     const snapshot = await getDocs(collection(db, 'businesses'));
-
     const filtered = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(item => {
-        const matchText =
-          item.name?.toLowerCase().includes(keyword.toLowerCase()) ||
-          item.description?.toLowerCase().includes(keyword.toLowerCase());
-
+      .filter(biz => {
+        const matchKeyword = keyword.trim() === '' || (
+          biz.name?.toLowerCase().includes(keyword.toLowerCase()) ||
+          biz.description?.toLowerCase().includes(keyword.toLowerCase())
+        );
         const matchCategory =
           selectedCategories.length === 0 ||
-          selectedCategories.some(cat => item.category_ids?.includes(cat));
-
-        return matchText && matchCategory;
+          selectedCategories.some(id => biz.category_ids?.includes(id));
+        return matchKeyword && matchCategory;
       });
 
     setResults(filtered);
@@ -50,47 +51,68 @@ export default function SearchScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <TextInput
-        placeholder="Search by business name or description..."
+        placeholder="Search businesses..."
         value={keyword}
         onChangeText={setKeyword}
-        style={styles.input}
         onSubmitEditing={handleSearch}
+        style={styles.input}
+        placeholderTextColor="#aaa"
       />
 
-      <Text style={styles.filterLabel}>Filter by categories:</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-        {categories.map(cat => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoryButton,
-              selectedCategories.includes(cat.id) && styles.categorySelected
-            ]}
-            onPress={() => toggleCategory(cat.id)}
-          >
-            <Text style={selectedCategories.includes(cat.id) ? styles.selectedText : null}>
-              {cat.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <Text style={styles.label}>Categories</Text>
+      <View style={styles.categoryContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
+          {categories.map(cat => (
+            <TouchableOpacity
+              key={cat.id}
+              onPress={() => toggleCategory(cat.id)}
+              style={[
+                styles.categoryChip,
+                selectedCategories.includes(cat.id) && styles.categoryChipSelected
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategories.includes(cat.id) && styles.categoryTextSelected
+                ]}
+              >
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
-      <Button title="Search" onPress={handleSearch} />
+      <TouchableOpacity onPress={handleSearch} style={styles.searchBtn}>
+        <Text style={styles.searchBtnText}>Search</Text>
+      </TouchableOpacity>
 
       <FlatList
         data={results}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
+        ListEmptyComponent={<Text style={styles.noResults}>No results found.</Text>}
         renderItem={({ item }) => (
-          <View style={styles.resultCard}>
-            <Text style={styles.title}>{item.name}</Text>
-            <Text>{item.description}</Text>
-            <Button
-              title="View Detail"
-              onPress={() => navigation.navigate('Business', { businessId: item.id })}
-            />
+          <View style={styles.card}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <Text style={styles.cardDesc}>{item.description}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Business', { businessId: item.id })}
+                style={styles.cardBtn}
+              >
+                <Text style={styles.cardBtnText}>View Details</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.noResult}>No Results</Text>}
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
     </View>
   );
@@ -98,39 +120,105 @@ export default function SearchScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 16,
-    flex: 1
+    backgroundColor: '#fff'
   },
   input: {
     borderWidth: 1,
-    padding: 8,
-    marginBottom: 8,
-    borderRadius: 4
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 12,
+    color: '#000'
   },
-  filterLabel: {
-    fontWeight: 'bold',
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 6,
+    color: '#555'
+  },
+  categoryContainer: {
+    marginBottom: 12
+  },
+  categoryScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    marginRight: 8,
+    backgroundColor: '#e0e0e0',
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  categoryChipSelected: {
+    backgroundColor: '#388e3c',
+    borderColor: '#2e7d32',
+  },
+  categoryText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  categoryTextSelected: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  searchBtn: {
+    backgroundColor: '#000',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  searchBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  card: {
+    backgroundColor: '#f2f2f2',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 12
+  },
+  cardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardTextContainer: {
+    flex: 1,  // This ensures text takes available space before button
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '600',
     marginBottom: 4
   },
-  categoryButton: {
-    padding: 8,
-    marginRight: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#aaa',
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0'
+  cardDesc: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 8
   },
-  categorySelected: {
-    backgroundColor: '#4caf50',
-    borderColor: '#388e3c'
+  cardBtn: {
+    backgroundColor: '#333',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    marginLeft: 10,  // Adds space between text and button
   },
-  selectedText: {
-    color: 'white',
-    fontWeight: 'bold'
+  cardBtnText: {
+    color: '#fff',
+    fontSize: 13
   },
-  resultCard: {
-    backgroundColor: '#f2f2f2',
-    padding: 12,
-    marginBottom: 10,
+  noResults: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 30,
+    fontSize: 14
   }
-})
+});

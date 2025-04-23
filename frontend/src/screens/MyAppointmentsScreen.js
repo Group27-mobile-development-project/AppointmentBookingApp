@@ -1,7 +1,24 @@
 // src/screen/MyAppointmentsScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Button, Alert, TouchableOpacity } from 'react-native';
-import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  getDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
@@ -18,16 +35,16 @@ export default function MyAppointmentsScreen() {
 
   const fetchAppointments = async () => {
     const user = getAuth().currentUser;
-    if (!user) {
-      console.warn('No authenticated user');
-      return;
-    }
+    if (!user) return;
 
-    const q = query(collection(db, 'appointments'), where('user_id', '==', user.uid));
+    const q = query(
+      collection(db, 'appointments'),
+      where('user_id', '==', user.uid)
+    );
     const snapshot = await getDocs(q);
-
     const enriched = await Promise.all(
-      snapshot.docs.map(async docSnap => {
+      snapshot.docs.map(async (docSnap) => {
+
         const data = docSnap.data();
 
         const slotRef = doc(db, 'businesses', data.business_id, 'slots', data.slot_id);
@@ -54,7 +71,7 @@ export default function MyAppointmentsScreen() {
           businessName,
           slotName,
           customerName,
-          servicerName
+          servicerName,
         };
       })
     );
@@ -102,6 +119,7 @@ export default function MyAppointmentsScreen() {
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 
     return <Text style={{ color: 'green' }}>Starts in {hours}h {minutes}m</Text>;
+
   };
 
   if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
@@ -119,12 +137,25 @@ export default function MyAppointmentsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.business}>{item.businessName}</Text>
-            <Text>Customer: {item.customerName}</Text>
-            <Text>Servicer: {item.servicerName}</Text>
-            <Text>Slot: {item.slotName}</Text>
-            <Text>Start: {new Date(item.start_time.seconds * 1000).toLocaleString()}</Text>
-            <Text>Status: {item.status}</Text>
+            <View style={styles.cardHeader}>
+              <Image
+                source={{ uri: 'https://via.placeholder.com/50' }}
+                style={styles.avatar}
+              />
+              <View>
+                <Text style={styles.businessName}>{item.businessName}</Text>
+                <Text style={styles.dateText}>
+                  {new Date(item.start_time.seconds * 1000).toLocaleString()}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.cardDetails}>
+              <Text style={styles.detailText}>Customer: {item.customerName}</Text>
+              <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
+              <Text style={styles.detailText}>Slot: {item.slotName}</Text>
+              <Text style={styles.detailText}>Status: {item.status}</Text>
+
             {renderCountdown(item.start_time)}
 
             <View style={{ marginTop: 8 }}>
@@ -135,27 +166,80 @@ export default function MyAppointmentsScreen() {
                 <Button title="Leave a Review" onPress={() => Alert.alert('Review', 'Leave a review feature coming soon!')} />
               )}
             </View>
+
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => handleDelete(item.id)}
+            >
+              <Text style={styles.deleteText}>Delete</Text>
+            </TouchableOpacity>
           </View>
         )}
-        ListEmptyComponent={<Text style={styles.empty}>You don't have any appointments</Text>}
+        ListEmptyComponent={
+          <Text style={styles.empty}>You don't have any appointments.</Text>
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: { fontSize: 18, fontWeight: 'bold' },
-  headerRow: {
+  container: {
+    padding: 20,
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 24,
+    marginBottom: 20,
+    fontWeight: 'bold',
+  },
+  card: {
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+  },
+  cardHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  icon: {
-    padding: 4,
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
-  card: { backgroundColor: '#eee', padding: 12, marginBottom: 10, borderRadius: 6 },
-  business: { fontWeight: 'bold', fontSize: 16 },
-  empty: { textAlign: 'center', marginTop: 40, color: 'gray' }
+  businessName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  dateText: {
+    color: '#666',
+    fontSize: 13,
+  },
+  cardDetails: {
+    marginBottom: 10,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  deleteBtn: {
+    backgroundColor: '#dc3545',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignSelf: 'flex-end',
+  },
+  deleteText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  empty: {
+    textAlign: 'center',
+    marginTop: 40,
+    color: 'gray',
+  },
 });
