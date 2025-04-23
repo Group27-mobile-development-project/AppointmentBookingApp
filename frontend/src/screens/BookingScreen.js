@@ -1,10 +1,10 @@
-// src/screens/BookingSrceen.js
+// src/screens/BookingScreen.js
 import React, { useEffect, useState } from 'react';
+import { FlatList, Button } from 'react-native';
 import {
   View,
   Text,
-  Button,
-  FlatList,
+  TouchableOpacity,
   StyleSheet,
   Alert,
   Platform
@@ -131,17 +131,25 @@ export default function BookingScreen({ route, navigation }) {
     <View style={styles.container}>
       {business && (
         <>
-          <Text style={styles.businessName}>{business.name}</Text>
-          <Text>{business.description}</Text>
+          <View style={styles.businessBanner}>
+            <Text style={styles.businessName}>{business.name}</Text>
+            <Text style={styles.businessDescription}>{business.description}</Text>
+          </View>
         </>
       )}
 
       <Text style={styles.sectionTitle}>Select starting time</Text>
 
-      <Button
-        title={date.toLocaleString()}
-        onPress={() => setPickerVisible(true)}
-      />
+      <View style={styles.datePickerButtonContainer}>
+        <TouchableOpacity
+          style={styles.datePickerButton}
+          onPress={() => setPickerVisible(true)}
+        >
+          <Text style={styles.datePickerButtonText}>
+            {date.toLocaleString()}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <DateTimePickerModal
         isVisible={isPickerVisible}
@@ -152,7 +160,6 @@ export default function BookingScreen({ route, navigation }) {
         minimumDate={new Date()}
       />
 
-      <Text style={styles.sectionTitle}>Available Slots</Text>
       <FlatList
         data={slots}
         keyExtractor={(item) => item.id}
@@ -160,16 +167,21 @@ export default function BookingScreen({ route, navigation }) {
           const isAvailable = slotAvailability[item.id];
           const nextAvailable = new Date(date.getTime() + item.duration_min * 60000);
           return (
-            <Button
-              title={
-                isAvailable
-                  ? `Slot: ${item.name} (Available now)`
-                  : `Slot: ${item.name} (Next: ${nextAvailable.toLocaleTimeString()})`
-              }
+            <TouchableOpacity
+              style={[
+                styles.slotButton,
+                !isAvailable && styles.slotButtonUnavailable,
+                selectedSlot?.id === item.id && styles.slotButtonSelected
+              ]}
               onPress={() => isAvailable && setSelectedSlot(item)}
-              color={selectedSlot?.id === item.id ? 'green' : isAvailable ? undefined : 'gray'}
               disabled={!isAvailable}
-            />
+            >
+              <Text style={styles.slotText}>
+                {isAvailable
+                  ? `${item.name} (${nextAvailable.toLocaleTimeString()})`
+                  : `${item.name} (Unavailable)` }
+              </Text>
+            </TouchableOpacity>
           );
         }}
       />
@@ -178,6 +190,7 @@ export default function BookingScreen({ route, navigation }) {
         title="Book"
         onPress={handleBooking}
         disabled={!selectedSlot}
+        color="#000" // Black color for the "Book" button
       />
     </View>
   );
@@ -185,6 +198,63 @@ export default function BookingScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { padding: 16, flex: 1 },
-  businessName: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
-  sectionTitle: { marginTop: 16, fontWeight: 'bold' },
+  businessBanner: {
+    backgroundColor: '#343a40', // Black background for the business section
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderRadius: 10,
+  },
+  businessName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  businessDescription: {
+    fontSize: 12,
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  sectionTitle: { marginTop: 16, fontWeight: 'bold', color: '#000' },
+  datePickerButtonContainer: {
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  datePickerButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff', // White background for the button
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  datePickerButtonText: {
+    color: '#000', // Black color for the text inside the button
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  slotButton: {
+    backgroundColor: '#000', // Black background for slot buttons
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    alignItems: 'center',
+  },
+  slotButtonSelected: {
+    backgroundColor: '#4CAF50', // Green when selected
+  },
+  slotButtonUnavailable: {
+    backgroundColor: '#D3D3D3', // Gray when unavailable
+    opacity: 0.6, // Add blur effect
+  },
+  slotText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

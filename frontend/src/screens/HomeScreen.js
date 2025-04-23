@@ -1,67 +1,124 @@
+// src/screens/HomeScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Button, StyleSheet, Text, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import { getAuth, signOut } from 'firebase/auth';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { fetchUserAppointments } from '../services/appointments';
+import { useNavigation } from '@react-navigation/native';
 
-export default function HomeScreen({ navigation }) {
-  const [username, setUsername] = useState('');
+export default function HomeScreen() {
+  const [nextAppointment, setNextAppointment] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
-    const fetchUsername = async () => {
+    const fetchData = async () => {
       try {
-        const sub = await AsyncStorage.getItem('google_sub') || await AsyncStorage.getItem('userId');
-        if (!sub) return;
-
-        const userDoc = await getDoc(doc(db, 'users', sub));
-        if (userDoc.exists()) {
-          setUsername(userDoc.data().name || '');
+        const appointments = await fetchUserAppointments();
+        if (appointments.length > 0) {
+          const sorted = appointments.sort(
+            (a, b) => a.start_time.seconds - b.start_time.seconds
+          );
+          setNextAppointment(sorted[0]);
         }
       } catch (err) {
-        console.error('Fail to get username', err);
+        console.error('Fail to fetch appointment', err);
       }
     };
 
-    fetchUsername();
+    fetchData();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      const auth = getAuth();
-      await signOut(auth);
-      await AsyncStorage.clear(); // Xoá tất cả dữ liệu local
-      navigation.replace('Login'); // Quay về Login
-    } catch (err) {
-      Alert.alert('Logout failed', err.message);
-    }
-  };
 
   return (
     <View style={styles.container}>
-      {username ? <Text style={styles.greeting}>Hello, {username}</Text> : null}
+      <Text style={styles.title}>Home</Text>
 
-      <Button title="Search Businesses" onPress={() => navigation.navigate('Search')} />
-      <Button title="My Business" onPress={() => navigation.navigate('MyBusinesses')} />
-      <Button title="My Appointments" onPress={() => navigation.navigate('MyAppointments')} />
-      <Button title="Business Appointments" onPress={() => navigation.navigate('BusinessAppointments')} />
-      <View style={{ marginTop: 30 }}>
-        <Button title="Log Out" color="red" onPress={handleLogout} />
+      {/* Appointment Reminder Card with embedded banner */}
+      <View style={styles.card}>
+        <View style={styles.reminderBanner}>
+          <Text style={styles.reminderText}>Appointments Reminder</Text>
+        </View>
+
+        <View style={styles.cardContent}>
+          {nextAppointment ? (
+            <>
+              <Text style={styles.businessName}>
+                Upcoming: {nextAppointment.businessName}
+              </Text>
+              <Text style={styles.dateText}>
+                {new Date(
+                  nextAppointment.start_time.seconds * 1000
+                ).toLocaleString()}
+              </Text>
+            </>
+          ) : (
+            <Text style={styles.dateText}>
+              You have no upcoming appointments.
+            </Text>
+          )}
+        </View>
       </View>
+
+      {/* Navigate to MyAppointments Button */}
+      <TouchableOpacity
+        style={styles.manageBtn}
+        onPress={() => navigation.navigate('MyAppointments')}
+      >
+        <Text style={styles.manageBtnText}>Manage Appointment</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    padding: 20,
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 50
+    backgroundColor: '#fff',
   },
-  greeting: {
-    fontSize: 20,
+  title: {
+    fontSize: 24,
+    marginBottom: 10,
     fontWeight: 'bold',
-    marginBottom: 30
-  }
+  },
+  reminderBanner: {
+    backgroundColor: '#343a40',
+    paddingVertical: 12,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    alignItems: 'center',
+  },
+  reminderText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  card: {
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    overflow: 'hidden', // ensures rounded corners apply to inner content too
+    marginBottom: 20,
+  },
+  cardContent: {
+    padding: 12,
+  },
+  businessName: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dateText: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  manageBtn: {
+    marginTop: 20,
+    backgroundColor: 'black',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  manageBtnText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });

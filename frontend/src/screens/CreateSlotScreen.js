@@ -1,10 +1,12 @@
+// src/screen/CreateSlotScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet, Alert, Text } from 'react-native';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
 import { doc, setDoc, getDocs, collection, serverTimestamp } from 'firebase/firestore';
 import uuid from 'react-native-uuid';
 import { Picker } from '@react-native-picker/picker';
+import { View, TextInput, Button, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
+
 
 export default function CreateSlotScreen({ route, navigation }) {
   const { businessId } = route.params;
@@ -85,7 +87,9 @@ export default function CreateSlotScreen({ route, navigation }) {
         ))}
       </Picker>
 
-      <Button title="Create" onPress={handleCreate} />
+      <TouchableOpacity style={styles.button} onPress={handleCreate}>
+        <Text style={styles.buttonText}>Create</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -96,11 +100,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     padding: 8,
-    borderRadius: 4
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    color: '#000',
   },
   label: {
     fontWeight: 'bold',
     marginBottom: 4,
-    marginTop: 12
-  }
+    marginTop: 12,
+  },
+  button: {
+    backgroundColor: '#000', // Black background for the button
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff', // White text for the button
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

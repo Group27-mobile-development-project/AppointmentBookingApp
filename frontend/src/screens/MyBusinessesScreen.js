@@ -1,6 +1,5 @@
-// src/screens/MyBusinessesScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
@@ -39,20 +38,35 @@ export default function MyBusinessesScreen({ navigation }) {
         data={businesses}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={styles.businessCard}>
-            <Text style={styles.title}>{item.name}</Text>
-            <Text style={styles.desc}>{item.description}</Text>
-            <Button
-              title="View Detail"
-              onPress={() => navigation.navigate('Business', { businessId: item.id })}
-            />            
+          <View style={styles.card}>
+            <View style={styles.cardContent}>
+              <View style={styles.cardTextContainer}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <Text style={styles.cardDesc}>{item.description}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Business', { businessId: item.id })}
+                style={styles.cardBtn}
+              >
+                <Text style={styles.cardBtnText}>Manage</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
-      <Button
-        title="Create New Business"
+      <TouchableOpacity
         onPress={() => navigation.navigate('CreateBusiness')}
-      />
+        style={styles.createBtn}
+      >
+        <Text style={styles.createBtnText}>Register Business</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('BusinessAppointments')}
+        style={styles.businessAppointmentsBtn}
+      >
+        <Text style={styles.businessAppointmentsBtnText}>All Business Appointments</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -60,19 +74,66 @@ export default function MyBusinessesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16
+    padding: 16,
+    backgroundColor: '#fff'
   },
-  businessCard: {
-    backgroundColor: '#eee',
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 8
+  card: {
+    backgroundColor: '#f2f2f2',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 12
   },
-  title: {
-    fontWeight: 'bold',
-    fontSize: 16
+  cardContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  desc: {
-    fontSize: 14
-  }
+  cardTextContainer: {
+    flex: 1,  // This ensures text takes available space before button
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 4
+  },
+  cardDesc: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 8
+  },
+  cardBtn: {
+    backgroundColor: '#333',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    marginLeft: 10,  // Adds space between text and button
+  },
+  cardBtnText: {
+    color: '#fff',
+    fontSize: 13
+  },
+  createBtn: {
+    backgroundColor: '#000',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  createBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  businessAppointmentsBtn: {
+    backgroundColor: '#444',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  businessAppointmentsBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
