@@ -1,3 +1,4 @@
+// App.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -14,6 +15,7 @@ import CreateBusinessScreen from './src/screens/CreateBusinessScreen';
 import MyBusinessesScreen from './src/screens/MyBusinessesScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import BookingScreen from './src/screens/BookingScreen';
+import CalendarViewScreen from './src/screens/CalendarViewScreen';
 import CreateSlotScreen from './src/screens/CreateSlotScreen';
 import MyAppointmentsScreen from './src/screens/MyAppointmentsScreen';
 import BusinessAppointmentsScreen from './src/screens/BusinessAppointmentsScreen';
@@ -81,6 +83,7 @@ export default function App() {
             <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
             <Stack.Screen name="BusinessAppointments" component={BusinessAppointmentsScreen} />
             <Stack.Screen name="Business" component={BusinessScreen} />
+            <Stack.Screen name="CalendarView" component={CalendarViewScreen} />
           </Stack.Navigator>
         </SafeAreaView>
       </NavigationContainer>

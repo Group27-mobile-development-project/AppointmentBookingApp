@@ -1,3 +1,4 @@
+// src/screen/CreateBusinessScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   View, TextInput, Button, StyleSheet,

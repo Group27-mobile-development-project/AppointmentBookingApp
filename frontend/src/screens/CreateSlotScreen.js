@@ -1,3 +1,4 @@
+// src/screen/CreateSlotScreen.js
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
