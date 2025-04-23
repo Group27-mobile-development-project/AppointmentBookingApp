@@ -3,7 +3,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView, Text, Dimensions, StyleSheet } from 'react-native';
+import { Text, Dimensions, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+
 
 // Import screens (assuming you've already created these)
 import LoginScreen from './src/screens/LoginScreen';
@@ -65,21 +67,23 @@ const MainTabs = () => {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <SafeAreaView style={{ flex: 1 }}>
-        <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="MainTabs" component={MainTabs} />
-          <Stack.Screen name="CreateBusiness" component={CreateBusinessScreen} />
-          <Stack.Screen name="MyBusinesses" component={MyBusinessesScreen} />
-          <Stack.Screen name="Search" component={SearchScreen} />
-          <Stack.Screen name="Booking" component={BookingScreen} />
-          <Stack.Screen name="CreateSlot" component={CreateSlotScreen} />
-          <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
-          <Stack.Screen name="BusinessAppointments" component={BusinessAppointmentsScreen} />
-          <Stack.Screen name="Business" component={BusinessScreen} />
-        </Stack.Navigator>
-      </SafeAreaView>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+          <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen name="CreateBusiness" component={CreateBusinessScreen} />
+            <Stack.Screen name="MyBusinesses" component={MyBusinessesScreen} />
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="Booking" component={BookingScreen} />
+            <Stack.Screen name="CreateSlot" component={CreateSlotScreen} />
+            <Stack.Screen name="MyAppointments" component={MyAppointmentsScreen} />
+            <Stack.Screen name="BusinessAppointments" component={BusinessAppointmentsScreen} />
+            <Stack.Screen name="Business" component={BusinessScreen} />
+          </Stack.Navigator>
+        </SafeAreaView>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
