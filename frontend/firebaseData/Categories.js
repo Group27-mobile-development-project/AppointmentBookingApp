@@ -38,7 +38,7 @@ const CATEGORIES = [
   { id: 'accountant', name: 'Accountant', description: 'Financial and tax consulting' },
 
   { id: 'makeup', name: 'Makeup Artist', description: 'Professional makeup services' },
-  { id: 'tailor', name: 'Tailor', description: 'Custom clothing and alteration' }
+  { id: 'tailor', name: 'Tailor', description: 'Custom clothing and alteration' },
   { id: 'laundry', name: 'Laundry', description: 'Laundry services' }
 ];
 

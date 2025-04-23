@@ -1,3 +1,4 @@
+// src/screen/CreateSlotScreen.js
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, StyleSheet, Alert, Text } from 'react-native';
 import { getAuth } from 'firebase/auth';

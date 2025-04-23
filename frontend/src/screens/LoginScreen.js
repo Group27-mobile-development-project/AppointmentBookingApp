@@ -1,4 +1,4 @@
-
+// src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
 import useEmailAuth from '../auth/useEmailAuth';
