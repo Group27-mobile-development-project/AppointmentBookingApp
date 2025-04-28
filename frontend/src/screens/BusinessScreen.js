@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   viewButton: {
-    backgroundColor: '#2196f3',
+    backgroundColor: '#888',
     marginTop: 10,
     padding: 6,
     borderRadius: 6,

@@ -1,18 +1,16 @@
 // src/screens/BookingScreen.js
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, FlatList, Button, TextInput, ActivityIndicator } from 'react-native';
+import {
+  View, Text, TouchableOpacity, StyleSheet, Alert,
+  FlatList, TextInput, ActivityIndicator, KeyboardAvoidingView,
+  Keyboard, Platform
+} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { DateTime } from 'luxon';
 import { getAuth } from 'firebase/auth';
 import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-  query,
-  where
+  doc, getDoc, collection, getDocs, addDoc,
+  serverTimestamp, query, where
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
@@ -34,6 +32,7 @@ export default function BookingScreen({ route, navigation }) {
   const [slotNextAvailableTime, setSlotNextAvailableTime] = useState({});
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(true);
+  const [noteFocused, setNoteFocused] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,7 +155,7 @@ export default function BookingScreen({ route, navigation }) {
       google_event_id: ''
     });
 
-    Alert.alert('Booking successfully!');
+    Alert.alert('Booking successful!');
     navigation.goBack();
   };
 
@@ -180,39 +179,49 @@ export default function BookingScreen({ route, navigation }) {
   }
 
   return (
-    <View style={styles.container}>
-      {business && (
-        <View style={styles.businessBanner}>
-          <Text style={styles.businessName}>{business.name}</Text>
-          <Text style={styles.businessDescription}>{business.description}</Text>
-        </View>
-      )}
-
-      <Text style={styles.sectionTitle}>Select starting time</Text>
-
-      <View style={styles.datePickerButtonContainer}>
-        <TouchableOpacity
-          style={styles.datePickerButton}
-          onPress={() => setPickerVisible(true)}
-        >
-          <Text style={styles.datePickerButtonText}>
-            {date.toLocaleString()}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <DateTimePickerModal
-        isVisible={isPickerVisible}
-        mode="datetime"
-        onConfirm={handleConfirm}
-        onCancel={() => setPickerVisible(false)}
-        is24Hour={true}
-        minimumDate={new Date()}
-      />
-
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <FlatList
-        data={slots}
+        data={noteFocused ? [] : slots}
         keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          <>
+            {business && (
+              <View style={styles.businessBanner}>
+                <Text style={styles.businessName}>{business.name}</Text>
+                <Text style={styles.businessDescription}>{business.description}</Text>
+              </View>
+            )}
+
+            {!noteFocused && (
+              <>
+                <Text style={styles.sectionTitle}>Select starting time</Text>
+
+                <View style={styles.datePickerButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.datePickerButton}
+                    onPress={() => setPickerVisible(true)}
+                  >
+                    <Text style={styles.datePickerButtonText}>
+                      {date.toLocaleString()}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <DateTimePickerModal
+                  isVisible={isPickerVisible}
+                  mode="datetime"
+                  onConfirm={handleConfirm}
+                  onCancel={() => setPickerVisible(false)}
+                  is24Hour={true}
+                  minimumDate={new Date()}
+                />
+              </>
+            )}
+          </>
+        }
         renderItem={({ item }) => {
           const isAvailable = slotAvailability[item.id];
           const displayTime = isAvailable
@@ -235,32 +244,48 @@ export default function BookingScreen({ route, navigation }) {
             </TouchableOpacity>
           );
         }}
-      />
+        ListFooterComponent={
+          <>
+            <Text style={styles.sectionTitle}>Leave a note (Optional)</Text>
 
-      <Text style={styles.sectionTitle}>Leave a note (Optional)</Text>
-      <View style={styles.noteInputContainer}>
-        <TextInput
-          style={styles.noteInput}
-          placeholder="Please leave a note here."
-          value={note}
-          onChangeText={setNote}
-          multiline
-          numberOfLines={3}
-        />
-      </View>
+            <View style={styles.noteInputContainer}>
+              <TextInput
+                style={[
+                  styles.noteInput,
+                  noteFocused && { height: 150, fontSize: 16 }
+                ]}
+                placeholder="Please leave a note here."
+                value={note}
+                onChangeText={setNote}
+                multiline
+                numberOfLines={4}
+                placeholderTextColor={"#888"}
+                onFocus={() => setNoteFocused(true)}
+                onBlur={() => setNoteFocused(false)}
+              />
+            </View>
 
-      <Button
-        title="Book"
-        onPress={handleBooking}
-        disabled={!selectedSlot}
-        color="#000"
+            {!noteFocused && (
+              <TouchableOpacity
+                style={[styles.bookButton, !selectedSlot && { backgroundColor: '#A5D6A7' }]}
+                onPress={handleBooking}
+                disabled={!selectedSlot}
+              >
+                <Text style={styles.bookButtonText}>Book</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        }
+        contentContainerStyle={[styles.container, noteFocused && { justifyContent: 'center' }]}
+        keyboardShouldPersistTaps="handled"
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, flex: 1 },
+  container: { padding: 16, flexGrow: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   businessBanner: {
     backgroundColor: '#343a40',
     paddingVertical: 16,
@@ -332,5 +357,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#000',
     textAlignVertical: 'top',
+  },
+  bookButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  bookButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

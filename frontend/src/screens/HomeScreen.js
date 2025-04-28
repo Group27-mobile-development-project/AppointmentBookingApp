@@ -8,22 +8,32 @@ export default function HomeScreen() {
   const [nextAppointment, setNextAppointment] = useState(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const appointments = await fetchUserAppointments();
-        if (appointments.length > 0) {
-          const sorted = appointments.sort(
-            (a, b) => a.start_time.seconds - b.start_time.seconds
-          );
-          setNextAppointment(sorted[0]);
-        }
-      } catch (err) {
-        console.error('Fail to fetch appointment', err);
+  // Function to fetch and update the next appointment
+  const updateNextAppointment = async () => {
+    try {
+      const appointments = await fetchUserAppointments();
+      if (appointments.length > 0) {
+        const sorted = appointments.sort(
+          (a, b) => a.start_time.seconds - b.start_time.seconds
+        );
+        setNextAppointment(sorted[0]);
+      } else {
+        setNextAppointment(null); // If no appointments, set as null
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch appointment', err);
+    }
+  };
 
-    fetchData();
+  // Run the update function once when the component mounts and set an interval to update periodically
+  useEffect(() => {
+    updateNextAppointment(); // Fetch the appointment on mount
+
+    // Set an interval to update the appointment reminder every 15 seconds (or any time interval you prefer)
+    const intervalId = setInterval(updateNextAppointment, 15000); // Update every 15 seconds
+
+    // Clean up the interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -43,9 +53,7 @@ export default function HomeScreen() {
                 Upcoming: {nextAppointment.businessName}
               </Text>
               <Text style={styles.dateText}>
-                {new Date(
-                  nextAppointment.start_time.seconds * 1000
-                ).toLocaleString()}
+                {new Date(nextAppointment.start_time.seconds * 1000).toLocaleString()}
               </Text>
             </>
           ) : (

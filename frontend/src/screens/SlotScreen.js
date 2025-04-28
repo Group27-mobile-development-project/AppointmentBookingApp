@@ -106,7 +106,7 @@ export default function SlotScreen({ route, navigation }) {
           style={styles.backButton}
           onPress={() => navigation.navigate('Business', { businessId })}
         >
-          <Text style={styles.backButtonText}>← Back to Business</Text>
+          <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
 
         {editing ? (
@@ -240,6 +240,6 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#2196f3',
+    color: '#888',
   },
 });
