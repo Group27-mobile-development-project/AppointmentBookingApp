@@ -1,5 +1,5 @@
-// src/screen/MyAppointmentsScreen.js
-import { Button } from 'react-native';
+// src/screens/MyAppointmentsScreen.js
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -43,9 +43,9 @@ export default function MyAppointmentsScreen() {
       where('user_id', '==', user.uid)
     );
     const snapshot = await getDocs(q);
-    const enriched = await Promise.all(
-      snapshot.docs.map(async (docSnap) => {
 
+    const enriched = await Promise.all(
+      snapshot.docs.map(async docSnap => {
         const data = docSnap.data();
 
         const slotRef = doc(db, 'businesses', data.business_id, 'slots', data.slot_id);
@@ -81,99 +81,113 @@ export default function MyAppointmentsScreen() {
     setLoading(false);
   };
 
-  const handleDelete = async (appointment) => {
+  const handleDelete = async appointment => {
     const { id, start_time, status } = appointment;
     const startTimeDate = new Date(start_time.seconds * 1000);
     const now = new Date();
     const diffHours = (startTimeDate - now) / (1000 * 60 * 60);
 
     if (status === 'confirmed' && diffHours < 24) {
-      Alert.alert('Cannot Cancel', 'You can only cancel confirmed appointments more than 24 hours in advance.');
+      Alert.alert(
+        'Cannot Cancel',
+        'You can only cancel confirmed appointments more than 24 hours in advance.'
+      );
       return;
     }
 
-    Alert.alert('Delete Appointment', 'Are you sure you want to delete this appointment?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('Cancel Appointment', 'Are you sure you want to cancel this appointment?', [
+      { text: 'No', style: 'cancel' },
       {
-        text: 'Delete', style: 'destructive', onPress: async () => {
+        text: 'Yes',
+        style: 'destructive',
+        onPress: async () => {
           try {
             await deleteDoc(doc(db, 'appointments', id));
             fetchAppointments();
-            Alert.alert('Appointment deleted.');
+            Alert.alert('Appointment canceled.');
           } catch (err) {
-            console.error('Failed to delete appointment:', err);
-            Alert.alert('Error deleting appointment');
+            console.error('Failed to cancel appointment:', err);
+            Alert.alert('Error canceling appointment');
           }
-        }
-      }
+        },
+      },
     ]);
   };
 
-  const renderCountdown = (startTime) => {
+  const renderCountdown = startTime => {
     const now = new Date();
     const appointmentDate = new Date(startTime.seconds * 1000);
     const diffMs = appointmentDate - now;
-
     if (diffMs <= 0) return null;
-
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-    return <Text style={{ color: 'green' }}>Starts in {hours}h {minutes}m</Text>;
-
+    return (
+      <Text style={styles.countdownText}>
+        Starts in {hours}h {minutes}m
+      </Text>
+    );
   };
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
+  if (loading) {
+    return <ActivityIndicator style={{ marginTop: 40 }} />;
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
+        <Ionicons
+          name="calendar"
+          size={25}
+          color="#333"
+          onPress={() => navigation.navigate('CalendarView')}
+          style={styles.icon}
+        />
         <Text style={styles.header}>My Appointments</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('CalendarView')}>
-          <Ionicons name="calendar" size={28} color="#333" style={styles.icon} />
-        </TouchableOpacity>
       </View>
+
       <FlatList
         data={appointments}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          return (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Image
-                  source={{ uri: 'https://via.placeholder.com/50' }}
-                  style={styles.avatar}
-                />
-                <View>
-                  <Text style={styles.businessName}>{item.businessName}</Text>
-                  <Text style={styles.dateText}>
-                    {new Date(item.start_time.seconds * 1000).toLocaleString()}
-                  </Text>
-                </View>
-              </View>
-        
-              <View style={styles.cardDetails}>
-                <Text style={styles.detailText}>Customer: {item.customerName}</Text>
-                <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
-                <Text style={styles.detailText}>Slot: {item.slotName}</Text>
-                <Text style={styles.detailText}>Status: {item.status}</Text>
-                {renderCountdown(item.start_time)}
-              </View>
-        
-              <View style={{ marginTop: 8 }}>
-                {(item.status !== 'completed') && (
-                  <Button title="Delete" color="red" onPress={() => handleDelete(item)} />
-                )}
-                {item.status === 'completed' && (
-                  <Button title="Leave a Review" onPress={() => Alert.alert('Review', 'Leave a review feature coming soon!')} />
-                )}
+        keyExtractor={item => item.id}
+        ListHeaderComponent={
+          <View style={styles.reminderBanner}>
+            <Text style={styles.reminderText}>Schedule</Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Image
+                source={{ uri: 'https://via.placeholder.com/50' }}
+                style={styles.avatar}
+              />
+              <View>
+                <Text style={styles.businessName}>{item.businessName}</Text>
+                <Text style={styles.dateText}>
+                  {new Date(item.start_time.seconds * 1000).toLocaleString()}
+                </Text>
               </View>
             </View>
-          );
-        }}        
+
+            <View style={styles.cardDetails}>
+              <Text style={styles.detailText}>Customer: {item.customerName}</Text>
+              <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
+              <Text style={styles.detailText}>Slot: {item.slotName}</Text>
+              <Text style={styles.detailText}>Status: {item.status}</Text>
+              {renderCountdown(item.start_time)}
+            </View>
+
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => handleDelete(item)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         ListEmptyComponent={
           <Text style={styles.empty}>You don't have any appointments.</Text>
         }
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
     </View>
   );
@@ -185,10 +199,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  icon: {
+    marginRight: 8,
+  },
+  header: {
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#000',
+  },
+  reminderBanner: {
+    backgroundColor: '#343a40',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  reminderText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   card: {
     backgroundColor: '#f2f2f2',
@@ -222,14 +257,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
-  deleteBtn: {
+  countdownText: {
+    color: 'green',
+    marginTop: 4,
+  },
+  cancelBtn: {
     backgroundColor: '#dc3545',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
     alignSelf: 'flex-end',
   },
-  deleteText: {
+  cancelText: {
     color: '#fff',
     fontWeight: '600',
   },

@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Button,
-  Alert,
   TextInput,
   Modal,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, signOut, updatePassword } from 'firebase/auth';
@@ -76,31 +76,48 @@ export default function AccountScreen({ navigation }) {
     }
   };
 
+  const CustomButton = ({ title, onPress, backgroundColor = '#000' }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[styles.customButton, { backgroundColor }]}
+    >
+      <Text style={styles.customButtonText}>{title}</Text>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Account</Text>
-      {username ? <Text style={styles.greeting}>Hello, {username}</Text> : null}
-      {email ? <Text style={styles.email}>Email: {email}</Text> : null}
 
-      <View style={styles.actions}>
-        <Button
-          title="My Appointments"
-          onPress={() => navigation.navigate('MyAppointments')}
-        />
-        <Button
-          title="Business Appointments"
-          onPress={() => navigation.navigate('BusinessAppointments')}
-        />
-        <Button
-          title="Change Password"
-          onPress={() => setModalVisible(true)}
-        />
-        <View style={{ marginTop: 16 }}>
-          <Button title="Log Out" color="red" onPress={handleLogout} />
+      {/* Account Banner */}
+      <View style={styles.reminderBanner}>
+        <Text style={styles.reminderText}>{username}</Text>
+      </View>
+
+      <View style={styles.card}>
+        <View style={styles.cardContent}>
+          <View style={styles.profileContainer}>
+            <View style={styles.profilePic} />
+            <Text style={styles.email}>{email}</Text>
+          </View>
+
+          <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
+            <Text style={styles.editProfileText}>Edit Profile</Text>
+          </TouchableOpacity>
+
+          <CustomButton
+            title="Change Password"
+            onPress={() => setModalVisible(true)}
+          />
+          <CustomButton
+            title="Log Out"
+            backgroundColor="red"
+            onPress={handleLogout}
+          />
         </View>
       </View>
 
-      {/* Changing password */}
+      {/* Changing password modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -111,6 +128,7 @@ export default function AccountScreen({ navigation }) {
               onChangeText={setNewPassword}
               secureTextEntry
               style={styles.input}
+              placeholderTextColor="#888"
             />
             <TextInput
               placeholder="Confirm Password"
@@ -118,15 +136,14 @@ export default function AccountScreen({ navigation }) {
               onChangeText={setConfirmPassword}
               secureTextEntry
               style={styles.input}
+              placeholderTextColor="#888"
             />
-            <Button title="Submit" onPress={handleChangePassword} />
-            <View style={{ marginTop: 8 }}>
-              <Button
-                title="Cancel"
-                color="gray"
-                onPress={() => setModalVisible(false)}
-              />
-            </View>
+            <CustomButton title="Submit" onPress={handleChangePassword} />
+            <CustomButton
+              title="Cancel"
+              backgroundColor="gray"
+              onPress={() => setModalVisible(false)}
+            />
           </View>
         </View>
       </Modal>
@@ -137,28 +154,69 @@ export default function AccountScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
     backgroundColor: '#fff',
+    paddingTop: 60,        // leave room for title
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 12,
+    marginBottom: 10,
+    alignSelf: 'right', // top-right
   },
-  greeting: {
-    fontSize: 18,
-    marginBottom: 4,
+  reminderBanner: {
+    backgroundColor: '#343a40',
+    paddingVertical: 12,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    alignItems: 'center',
+  },
+  reminderText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  card: {
+    backgroundColor: '#f2f2f2',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginTop: 0,
+  },
+  cardContent: {
+    padding: 20,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  profilePic: {
+    width: 70,
+    height: 70,
+    borderRadius: 30,
+    backgroundColor: '#ddd',
+    marginRight: 12,
   },
   email: {
     fontSize: 14,
     color: '#555',
-    marginBottom: 20,
   },
-  actions: {
-    width: '80%',
-    gap: 12,
+  editProfileText: {
+    color: '#3b82f6',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontSize: 16,
+  },
+  customButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  customButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   modalContainer: {
     flex: 1,
@@ -184,5 +242,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    color: '#000',
   },
 });

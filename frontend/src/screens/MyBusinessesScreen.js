@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet
+} from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../firebaseConfig';
@@ -30,13 +36,15 @@ export default function MyBusinessesScreen({ navigation }) {
     fetchBusinesses();
   }, []);
 
-  if (loading) return <Text style={{ textAlign: 'center' }}>Loading...</Text>;
+  if (loading) {
+    return <Text style={{ textAlign: 'center', marginTop: 20 }}>Loading...</Text>;
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
         data={businesses}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.cardContent}>
@@ -53,19 +61,27 @@ export default function MyBusinessesScreen({ navigation }) {
             </View>
           </View>
         )}
+        ListFooterComponent={
+          // only show this if there is at least one business
+          businesses.length > 0 ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('BusinessAppointments')}
+              style={styles.smallFooterBtn}
+            >
+              <Text style={styles.smallFooterBtnText}>
+                All Business Appointments
+              </Text>
+            </TouchableOpacity>
+          ) : null
+        }
         contentContainerStyle={{ paddingBottom: 24 }}
       />
+
       <TouchableOpacity
         onPress={() => navigation.navigate('CreateBusiness')}
         style={styles.createBtn}
       >
         <Text style={styles.createBtnText}>Register Business</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => navigation.navigate('BusinessAppointments')}
-        style={styles.businessAppointmentsBtn}
-      >
-        <Text style={styles.businessAppointmentsBtnText}>All Business Appointments</Text>
       </TouchableOpacity>
     </View>
   );
@@ -89,7 +105,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTextContainer: {
-    flex: 1,  // This ensures text takes available space before button
+    flex: 1,  // ensures text takes available space
   },
   cardTitle: {
     fontSize: 17,
@@ -106,11 +122,23 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
-    marginLeft: 10,  // Adds space between text and button
+    marginLeft: 10,
   },
   cardBtnText: {
     color: '#fff',
     fontSize: 13
+  },
+  smallFooterBtn: {
+    alignSelf: 'center',
+    backgroundColor: '#444',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  smallFooterBtnText: {
+    color: '#fff',
+    fontSize: 14,
   },
   createBtn: {
     backgroundColor: '#000',
@@ -123,17 +151,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600'
-  },
-  businessAppointmentsBtn: {
-    backgroundColor: '#444',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  businessAppointmentsBtnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
