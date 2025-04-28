@@ -1,4 +1,4 @@
-// src/screens/CreateSlotScreen.js
+
 
 import React, { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
@@ -100,7 +100,7 @@ export default function CreateSlotScreen({ route, navigation }) {
             key={cat.id}
             label={cat.name}
             value={cat.id}
-            color="#000"   // <-- force black color
+            color="#000" 
           />
         ))}
       </Picker>

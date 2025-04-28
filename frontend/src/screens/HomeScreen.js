@@ -1,4 +1,4 @@
-// src/screens/HomeScreen.js
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { fetchUserAppointments } from '../services/appointments';
@@ -8,7 +8,6 @@ export default function HomeScreen() {
   const [nextAppointment, setNextAppointment] = useState(null);
   const navigation = useNavigation();
 
-  // Function to fetch and update the next appointment
   const updateNextAppointment = async () => {
     try {
       const appointments = await fetchUserAppointments();
@@ -18,21 +17,18 @@ export default function HomeScreen() {
         );
         setNextAppointment(sorted[0]);
       } else {
-        setNextAppointment(null); // If no appointments, set as null
+        setNextAppointment(null);
       }
     } catch (err) {
       console.error('Failed to fetch appointment', err);
     }
   };
 
-  // Run the update function once when the component mounts and set an interval to update periodically
   useEffect(() => {
-    updateNextAppointment(); // Fetch the appointment on mount
+    updateNextAppointment();
 
-    // Set an interval to update the appointment reminder every 15 seconds (or any time interval you prefer)
-    const intervalId = setInterval(updateNextAppointment, 15000); // Update every 15 seconds
+    const intervalId = setInterval(updateNextAppointment, 15000);
 
-    // Clean up the interval on unmount
     return () => clearInterval(intervalId);
   }, []);
 
@@ -101,7 +97,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#f2f2f2',
     borderRadius: 10,
-    overflow: 'hidden', // ensures rounded corners apply to inner content too
+    overflow: 'hidden',
     marginBottom: 20,
   },
   cardContent: {

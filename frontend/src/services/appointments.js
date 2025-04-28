@@ -1,4 +1,3 @@
-// File: services/appointments.js
 import { getDocs, getDoc, query, where, collection, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { getAuth } from 'firebase/auth';

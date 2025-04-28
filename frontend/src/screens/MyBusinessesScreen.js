@@ -62,7 +62,6 @@ export default function MyBusinessesScreen({ navigation }) {
           </View>
         )}
         ListFooterComponent={
-          // only show this if there is at least one business
           businesses.length > 0 ? (
             <TouchableOpacity
               onPress={() => navigation.navigate('BusinessAppointments')}
@@ -105,7 +104,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTextContainer: {
-    flex: 1,  // ensures text takes available space
+    flex: 1,
   },
   cardTitle: {
     fontSize: 17,

@@ -1,4 +1,3 @@
-// src/screens/BusinessAppointmentsScreen.js
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, Alert, ActivityIndicator } from 'react-native';
