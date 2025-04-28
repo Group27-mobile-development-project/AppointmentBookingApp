@@ -94,6 +94,7 @@ export default function CreateSlotScreen({ route, navigation }) {
         selectedValue={selectedCategory}
         onValueChange={(itemValue) => setSelectedCategory(itemValue)}
         style={styles.input}
+        placeholderTextColor="#888"
       >
         {categories.map((cat) => (
           <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
