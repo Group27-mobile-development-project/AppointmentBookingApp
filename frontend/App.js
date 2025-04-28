@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import SlotScreen from './src/screens/SlotScreen';
 
 
 // Import screens (assuming you've already created these)
@@ -84,6 +85,7 @@ export default function App() {
             <Stack.Screen name="BusinessAppointments" component={BusinessAppointmentsScreen} />
             <Stack.Screen name="Business" component={BusinessScreen} />
             <Stack.Screen name="CalendarView" component={CalendarViewScreen} />
+            <Stack.Screen name="SlotScreen" component={SlotScreen} />
           </Stack.Navigator>
         </SafeAreaView>
       </NavigationContainer>

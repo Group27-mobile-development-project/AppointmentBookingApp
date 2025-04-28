@@ -5,8 +5,8 @@ users/{userId} {
   email: string,
   phone: string,
   image_url: string,
-  saved_at: timestamp
-}
+  saved_at: timestamp,
+  is_verified: boolean
 }
       # Google_tokens:
       users/{userId}/google_tokens/{tokenId} {

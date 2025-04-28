@@ -1,4 +1,5 @@
 // src/screens/BusinessAppointmentsScreen.js
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Button, Alert, ActivityIndicator } from 'react-native';
 import { getAuth } from 'firebase/auth';
@@ -14,17 +15,22 @@ import {
 import { db } from '../firebaseConfig';
 
 export default function BusinessAppointmentsScreen() {
-  const [appointments, setAppointments] = useState([]);
+  const [ongoingAppointments, setOngoingAppointments] = useState([]);
+  const [pastAppointments, setPastAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      const user = getAuth().currentUser;
-      if (!user) {
-        Alert.alert('You must be logged in to view your business appointments.');
-        return;
-      }
+    fetchAppointments();
+  }, []);
 
+  const fetchAppointments = async () => {
+    const user = getAuth().currentUser;
+    if (!user) {
+      Alert.alert('You must be logged in to view your business appointments.');
+      return;
+    }
+
+    try {
       const businessQuery = query(collection(db, 'businesses'), where('user_id', '==', user.uid));
       const businessSnapshot = await getDocs(businessQuery);
       if (businessSnapshot.empty) {
@@ -41,26 +47,23 @@ export default function BusinessAppointmentsScreen() {
       );
 
       const appointmentSnapshot = await getDocs(appointmentQuery);
+      const now = new Date();
+
       const enriched = await Promise.all(appointmentSnapshot.docs.map(async docSnap => {
         const data = docSnap.data();
-
-        // Get slot info
         const slotRef = doc(db, 'businesses', data.business_id, 'slots', data.slot_id);
         const slotSnap = await getDoc(slotRef);
         const slotName = slotSnap.exists() ? slotSnap.data().name : 'Unknown Slot';
 
-        // Get business info
         const bizRef = doc(db, 'businesses', data.business_id);
         const bizSnap = await getDoc(bizRef);
         const businessData = bizSnap.exists() ? bizSnap.data() : null;
         const businessOwnerId = businessData?.user_id;
 
-        // Get customer info
         const userRef = doc(db, 'users', data.user_id);
         const userSnap = await getDoc(userRef);
         const customerName = userSnap.exists() ? userSnap.data().name : 'Unknown Customer';
 
-        // Get servicer info
         const servicerRef = businessOwnerId ? doc(db, 'users', businessOwnerId) : null;
         const servicerSnap = servicerRef ? await getDoc(servicerRef) : null;
         const servicerName = servicerSnap?.exists() ? servicerSnap.data().name : 'Unknown Servicer';
@@ -74,74 +77,107 @@ export default function BusinessAppointmentsScreen() {
         };
       }));
 
-      setAppointments(enriched);
+      const ongoing = enriched
+        .filter(item => new Date(item.start_time.seconds * 1000) >= now)
+        .sort((a, b) => a.start_time.seconds - b.start_time.seconds);
+
+      const past = enriched
+        .filter(item => new Date(item.start_time.seconds * 1000) < now)
+        .sort((a, b) => b.start_time.seconds - a.start_time.seconds);
+
+      setOngoingAppointments(ongoing);
+      setPastAppointments(past);
+    } catch (error) {
+      console.error('Error fetching business appointments:', error);
+      Alert.alert('Error', 'Failed to load business appointments.');
+    } finally {
       setLoading(false);
-    };
-
-    fetchAppointments();
-  }, []);
-
-  const updateStatus = async (id, newStatus) => {
-    await updateDoc(doc(db, 'appointments', id), { status: newStatus });
-    setAppointments(prev =>
-      prev.map(app => (app.id === id ? { ...app, status: newStatus } : app))
-    );
+    }
   };
 
-  if (loading) return <ActivityIndicator style={{ marginTop: 40 }} />;
+  const updateStatus = async (id, newStatus) => {
+    try {
+      await updateDoc(doc(db, 'appointments', id), { status: newStatus });
+      fetchAppointments();
+      Alert.alert('Status updated.');
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      Alert.alert('Error updating status');
+    }
+  };
+
+  const renderAppointmentCard = (item) => (
+    <View style={styles.card}>
+      <Text style={styles.slot}>{item.slotName}</Text>
+      <Text>Customer: {item.customerName}</Text>
+      <Text>Servicer: {item.servicerName}</Text>
+      <Text>Start: {new Date(item.start_time.seconds * 1000).toLocaleString()}</Text>
+      <Text>Status: {item.status}</Text>
+
+      {item.status === 'pending' && (
+        <>
+          <Button
+            title="Confirm"
+            onPress={() => updateStatus(item.id, 'confirmed')}
+          />
+          <View style={{ height: 8 }} />
+          <Button
+            title="Cancel"
+            onPress={() => updateStatus(item.id, 'cancelled')}
+            color="red"
+          />
+        </>
+      )}
+    </View>
+  );
+
+  if (loading) {
+    return <ActivityIndicator style={{ marginTop: 40 }} size="large" color="#000" />;
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Appointments for Your Business</Text>
-      <FlatList
-        data={appointments}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.slot}>{item.slotName}</Text>
-            <Text>Customer: {item.customerName}</Text>
-            <Text>Servicer: {item.servicerName}</Text>
-            <Text>Start: {new Date(item.start_time.seconds * 1000).toLocaleString()}</Text>
-            <Text>Status: {item.status}</Text>
 
-            {item.status === 'pending' && (
-              <>
-                <Button
-                  title="Confirm"
-                  onPress={() => updateStatus(item.id, 'confirmed')}
-                />
-                <View style={{ height: 8 }} />
-                <Button
-                  title="Cancel"
-                  onPress={() => updateStatus(item.id, 'cancelled')}
-                  color="red"
-                />
-              </>
-            )}
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.empty}>No appointments</Text>}
+      <FlatList
+        data={ongoingAppointments}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={<Text style={styles.sectionTitle}>Ongoing / Upcoming Appointments</Text>}
+        renderItem={({ item }) => renderAppointmentCard(item)}
+        ListEmptyComponent={<Text style={styles.empty}>No upcoming appointments</Text>}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      />
+
+      <FlatList
+        data={pastAppointments}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={<Text style={styles.sectionTitle}>Past Appointments</Text>}
+        renderItem={({ item }) => renderAppointmentCard(item)}
+        ListEmptyComponent={<Text style={styles.empty}>No past appointments</Text>}
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  header: { fontSize: 22, fontWeight: 'bold', marginBottom: 16, textAlign: 'center' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginTop: 20, marginBottom: 8, color: '#000' },
   card: {
     backgroundColor: '#eee',
     padding: 12,
     marginBottom: 10,
-    borderRadius: 6
+    borderRadius: 8,
   },
   slot: {
     fontWeight: 'bold',
-    fontSize: 16
+    fontSize: 16,
+    marginBottom: 4,
   },
   empty: {
     textAlign: 'center',
     marginTop: 40,
-    color: 'gray'
+    color: 'gray',
   }
 });

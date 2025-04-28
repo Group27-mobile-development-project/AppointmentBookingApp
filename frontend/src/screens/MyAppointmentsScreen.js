@@ -26,7 +26,8 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function MyAppointmentsScreen() {
-  const [appointments, setAppointments] = useState([]);
+  const [ongoingAppointments, setOngoingAppointments] = useState([]);
+  const [pastAppointments, setPastAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
@@ -38,47 +39,63 @@ export default function MyAppointmentsScreen() {
     const user = getAuth().currentUser;
     if (!user) return;
 
-    const q = query(
-      collection(db, 'appointments'),
-      where('user_id', '==', user.uid)
-    );
-    const snapshot = await getDocs(q);
+    try {
+      const q = query(
+        collection(db, 'appointments'),
+        where('user_id', '==', user.uid)
+      );
+      const snapshot = await getDocs(q);
 
-    const enriched = await Promise.all(
-      snapshot.docs.map(async docSnap => {
-        const data = docSnap.data();
+      const now = new Date();
 
-        const slotRef = doc(db, 'businesses', data.business_id, 'slots', data.slot_id);
-        const slotSnap = await getDoc(slotRef);
-        const slotName = slotSnap.exists() ? slotSnap.data().name : 'Unknown Slot';
+      const enriched = await Promise.all(
+        snapshot.docs.map(async docSnap => {
+          const data = docSnap.data();
+          const slotRef = doc(db, 'businesses', data.business_id, 'slots', data.slot_id);
+          const slotSnap = await getDoc(slotRef);
+          const slotName = slotSnap.exists() ? slotSnap.data().name : 'Unknown Slot';
 
-        const bizRef = doc(db, 'businesses', data.business_id);
-        const bizSnap = await getDoc(bizRef);
-        const businessData = bizSnap.exists() ? bizSnap.data() : null;
-        const businessName = businessData ? businessData.name : 'Unknown Business';
-        const businessOwnerId = businessData?.user_id;
+          const bizRef = doc(db, 'businesses', data.business_id);
+          const bizSnap = await getDoc(bizRef);
+          const businessData = bizSnap.exists() ? bizSnap.data() : null;
+          const businessName = businessData ? businessData.name : 'Unknown Business';
+          const businessOwnerId = businessData?.user_id;
 
-        const userRef = doc(db, 'users', data.user_id);
-        const userSnap = await getDoc(userRef);
-        const customerName = userSnap.exists() ? userSnap.data().name : 'Unknown Customer';
+          const userRef = doc(db, 'users', data.user_id);
+          const userSnap = await getDoc(userRef);
+          const customerName = userSnap.exists() ? userSnap.data().name : 'Unknown Customer';
 
-        const servicerRef = businessOwnerId ? doc(db, 'users', businessOwnerId) : null;
-        const servicerSnap = servicerRef ? await getDoc(servicerRef) : null;
-        const servicerName = servicerSnap?.exists() ? servicerSnap.data().name : 'Unknown Servicer';
+          const servicerRef = businessOwnerId ? doc(db, 'users', businessOwnerId) : null;
+          const servicerSnap = servicerRef ? await getDoc(servicerRef) : null;
+          const servicerName = servicerSnap?.exists() ? servicerSnap.data().name : 'Unknown Servicer';
 
-        return {
-          id: docSnap.id,
-          ...data,
-          businessName,
-          slotName,
-          customerName,
-          servicerName,
-        };
-      })
-    );
+          return {
+            id: docSnap.id,
+            ...data,
+            businessName,
+            slotName,
+            customerName,
+            servicerName,
+          };
+        })
+      );
 
-    setAppointments(enriched);
-    setLoading(false);
+      const ongoing = enriched
+        .filter(item => new Date(item.start_time.seconds * 1000) >= now)
+        .sort((a, b) => a.start_time.seconds - b.start_time.seconds);
+
+      const past = enriched
+        .filter(item => new Date(item.start_time.seconds * 1000) < now)
+        .sort((a, b) => b.start_time.seconds - a.start_time.seconds);
+
+      setOngoingAppointments(ongoing);
+      setPastAppointments(past);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      Alert.alert('Error', 'Failed to load your appointments.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async appointment => {
@@ -114,22 +131,39 @@ export default function MyAppointmentsScreen() {
     ]);
   };
 
-  const renderCountdown = startTime => {
-    const now = new Date();
-    const appointmentDate = new Date(startTime.seconds * 1000);
-    const diffMs = appointmentDate - now;
-    if (diffMs <= 0) return null;
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    return (
-      <Text style={styles.countdownText}>
-        Starts in {hours}h {minutes}m
-      </Text>
-    );
-  };
+  const renderAppointmentCard = (item) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Image
+          source={{ uri: 'https://via.placeholder.com/50' }}
+          style={styles.avatar}
+        />
+        <View>
+          <Text style={styles.businessName}>{item.businessName}</Text>
+          <Text style={styles.dateText}>
+            {new Date(item.start_time.seconds * 1000).toLocaleString()}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.cardDetails}>
+        <Text style={styles.detailText}>Customer: {item.customerName}</Text>
+        <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
+        <Text style={styles.detailText}>Slot: {item.slotName}</Text>
+        <Text style={styles.detailText}>Status: {item.status}</Text>
+      </View>
+
+      <TouchableOpacity
+        style={styles.cancelBtn}
+        onPress={() => handleDelete(item)}
+      >
+        <Text style={styles.cancelText}>Cancel</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   if (loading) {
-    return <ActivityIndicator style={{ marginTop: 40 }} />;
+    return <ActivityIndicator style={{ marginTop: 40 }} size="large" color="#000" />;
   }
 
   return (
@@ -146,46 +180,31 @@ export default function MyAppointmentsScreen() {
       </View>
 
       <FlatList
-        data={appointments}
+        data={ongoingAppointments}
         keyExtractor={item => item.id}
         ListHeaderComponent={
           <View style={styles.reminderBanner}>
-            <Text style={styles.reminderText}>Schedule</Text>
+            <Text style={styles.reminderText}>Ongoing / Upcoming Appointments</Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Image
-                source={{ uri: 'https://via.placeholder.com/50' }}
-                style={styles.avatar}
-              />
-              <View>
-                <Text style={styles.businessName}>{item.businessName}</Text>
-                <Text style={styles.dateText}>
-                  {new Date(item.start_time.seconds * 1000).toLocaleString()}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.cardDetails}>
-              <Text style={styles.detailText}>Customer: {item.customerName}</Text>
-              <Text style={styles.detailText}>Servicer: {item.servicerName}</Text>
-              <Text style={styles.detailText}>Slot: {item.slotName}</Text>
-              <Text style={styles.detailText}>Status: {item.status}</Text>
-              {renderCountdown(item.start_time)}
-            </View>
-
-            <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => handleDelete(item)}
-            >
-              <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        renderItem={({ item }) => renderAppointmentCard(item)}
         ListEmptyComponent={
-          <Text style={styles.empty}>You don't have any appointments.</Text>
+          <Text style={styles.empty}>No upcoming appointments.</Text>
+        }
+        contentContainerStyle={{ paddingBottom: 24 }}
+      />
+
+      <FlatList
+        data={pastAppointments}
+        keyExtractor={item => item.id}
+        ListHeaderComponent={
+          <View style={styles.reminderBanner}>
+            <Text style={styles.reminderText}>Past Appointments</Text>
+          </View>
+        }
+        renderItem={({ item }) => renderAppointmentCard(item)}
+        ListEmptyComponent={
+          <Text style={styles.empty}>No past appointments.</Text>
         }
         contentContainerStyle={{ paddingBottom: 24 }}
       />
@@ -194,87 +213,20 @@ export default function MyAppointmentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  icon: {
-    marginRight: 8,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  reminderBanner: {
-    backgroundColor: '#343a40',
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 0,
-  },
-  reminderText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  card: {
-    backgroundColor: '#f2f2f2',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 15,
-  },
-  businessName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  dateText: {
-    color: '#666',
-    fontSize: 13,
-  },
-  cardDetails: {
-    marginBottom: 10,
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#555',
-  },
-  countdownText: {
-    color: 'green',
-    marginTop: 4,
-  },
-  cancelBtn: {
-    backgroundColor: '#dc3545',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignSelf: 'flex-end',
-  },
-  cancelText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  empty: {
-    textAlign: 'center',
-    marginTop: 40,
-    color: 'gray',
-  },
+  container: { padding: 20, flex: 1, backgroundColor: '#fff' },
+  headerRow: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 16 },
+  icon: { marginRight: 8 },
+  header: { fontSize: 28, fontWeight: 'bold', color: '#000' },
+  reminderBanner: { backgroundColor: '#343a40', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 20 },
+  reminderText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  card: { backgroundColor: '#f2f2f2', borderRadius: 10, padding: 15, marginBottom: 15 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 15 },
+  businessName: { fontSize: 16, fontWeight: 'bold' },
+  dateText: { color: '#666', fontSize: 13 },
+  cardDetails: { marginBottom: 10 },
+  detailText: { fontSize: 14, color: '#555' },
+  cancelBtn: { backgroundColor: '#dc3545', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 6, alignSelf: 'flex-end' },
+  cancelText: { color: '#fff', fontWeight: '600' },
+  empty: { textAlign: 'center', marginTop: 40, color: 'gray' },
 });
