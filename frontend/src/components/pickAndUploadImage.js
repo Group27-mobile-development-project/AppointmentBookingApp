@@ -1,4 +1,4 @@
-// components/pickAndUploadImage.js
+
 import * as ImagePicker from 'expo-image-picker';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebaseConfig';

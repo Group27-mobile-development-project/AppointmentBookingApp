@@ -8,8 +8,6 @@ import { Text, Dimensions, StyleSheet } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import SlotScreen from './src/screens/SlotScreen';
 
-
-// Import screens (assuming you've already created these)
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import CreateBusinessScreen from './src/screens/CreateBusinessScreen';
@@ -23,15 +21,12 @@ import BusinessAppointmentsScreen from './src/screens/BusinessAppointmentsScreen
 import BusinessScreen from './src/screens/BusinessScreen';
 import AccountScreen from './src/screens/AccountScreen';
 
-// Get screen dimensions for responsiveness
 const { width, height } = Dimensions.get('window');
-const isLargeScreen = width > 400; // For detecting larger devices (like tablets)
+const isLargeScreen = width > 400;
 
-// Define the stack and tab navigators
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Tab navigator component
 const MainTabs = () => {
   return (
     <Tab.Navigator

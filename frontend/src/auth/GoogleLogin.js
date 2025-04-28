@@ -1,4 +1,4 @@
-// src/screens/GoogleLogin.js
+
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { useEffect } from 'react';

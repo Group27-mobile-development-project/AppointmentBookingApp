@@ -155,14 +155,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,        // leave room for title
+    paddingTop: 60,       
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
-    alignSelf: 'right', // top-right
+    alignSelf: 'right', 
   },
   reminderBanner: {
     backgroundColor: '#343a40',

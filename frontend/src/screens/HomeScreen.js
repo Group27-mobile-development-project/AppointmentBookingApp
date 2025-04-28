@@ -1,4 +1,4 @@
-// src/screens/HomeScreen.js
+
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { fetchUserAppointments } from '../services/appointments';
@@ -8,22 +8,28 @@ export default function HomeScreen() {
   const [nextAppointment, setNextAppointment] = useState(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const appointments = await fetchUserAppointments();
-        if (appointments.length > 0) {
-          const sorted = appointments.sort(
-            (a, b) => a.start_time.seconds - b.start_time.seconds
-          );
-          setNextAppointment(sorted[0]);
-        }
-      } catch (err) {
-        console.error('Fail to fetch appointment', err);
+  const updateNextAppointment = async () => {
+    try {
+      const appointments = await fetchUserAppointments();
+      if (appointments.length > 0) {
+        const sorted = appointments.sort(
+          (a, b) => a.start_time.seconds - b.start_time.seconds
+        );
+        setNextAppointment(sorted[0]);
+      } else {
+        setNextAppointment(null);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch appointment', err);
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    updateNextAppointment();
+
+    const intervalId = setInterval(updateNextAppointment, 15000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -43,9 +49,7 @@ export default function HomeScreen() {
                 Upcoming: {nextAppointment.businessName}
               </Text>
               <Text style={styles.dateText}>
-                {new Date(
-                  nextAppointment.start_time.seconds * 1000
-                ).toLocaleString()}
+                {new Date(nextAppointment.start_time.seconds * 1000).toLocaleString()}
               </Text>
             </>
           ) : (
@@ -93,7 +97,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#f2f2f2',
     borderRadius: 10,
-    overflow: 'hidden', // ensures rounded corners apply to inner content too
+    overflow: 'hidden',
     marginBottom: 20,
   },
   cardContent: {

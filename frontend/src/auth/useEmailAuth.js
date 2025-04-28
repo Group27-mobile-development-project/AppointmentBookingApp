@@ -1,4 +1,4 @@
-// src/auth/useEmailAuth.js
+
 import { 
   getAuth, 
   createUserWithEmailAndPassword, 
@@ -19,22 +19,19 @@ export default function useEmailAuth(onLoginSuccess) {
 
       console.log('[SIGNUP SUCCESS] user.uid:', user.uid);
 
-      // Gửi email xác minh
       await sendEmailVerification(user);
 
-      // Tạo document user trong Firestore
       await setDoc(doc(db, 'users', user.uid), {
         name,
         email: user.email,
         phone: '',
         image_url: '',
         saved_at: serverTimestamp(),
-        is_verified: false, // Thêm cột này mặc định là false
+        is_verified: false,
       }, { merge: true });
 
       alert('Verification email sent. Please check your inbox and verify your email before logging in.');
 
-      // Sign out ngay sau đăng ký để buộc họ xác minh
       await auth.signOut();
       
     } catch (error) {
@@ -52,12 +49,10 @@ export default function useEmailAuth(onLoginSuccess) {
       console.log('[LOGIN SUCCESS] user.uid:', user.uid);
 
       if (!user.emailVerified) {
-        // Nếu email chưa xác minh
         await auth.signOut();
         throw new Error('Email not verified. Please verify your email first.');
       }
 
-      // Kiểm tra thêm is_verified trong Firestore
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (!userDoc.exists()) {
         await auth.signOut();
@@ -66,7 +61,6 @@ export default function useEmailAuth(onLoginSuccess) {
 
       const userData = userDoc.data();
       if (!userData.is_verified) {
-        // Nếu Firestore chưa set `is_verified`, update luôn
         await setDoc(doc(db, 'users', user.uid), {
           is_verified: true
         }, { merge: true });

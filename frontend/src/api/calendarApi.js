@@ -1,4 +1,4 @@
-// src/api/calendarApi.js
+
 export async function createGoogleCalendarEvent(accessToken, eventData) {
     const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
