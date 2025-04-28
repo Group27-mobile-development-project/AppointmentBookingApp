@@ -1,14 +1,6 @@
 // src/screens/BookingScreen.js
 import React, { useEffect, useState } from 'react';
-import { FlatList, Button } from 'react-native';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Platform
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, FlatList, Button, TextInput, ActivityIndicator } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { DateTime } from 'luxon';
 import { getAuth } from 'firebase/auth';
@@ -39,28 +31,43 @@ export default function BookingScreen({ route, navigation }) {
   const [date, setDate] = useState(roundToNextQuarterHour(new Date()));
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [slotAvailability, setSlotAvailability] = useState({});
+  const [slotNextAvailableTime, setSlotNextAvailableTime] = useState({});
+  const [note, setNote] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
-      const businessSnap = await getDoc(doc(db, 'businesses', businessId));
-      if (businessSnap.exists()) setBusiness(businessSnap.data());
+      try {
+        setLoading(true);
+        const businessSnap = await getDoc(doc(db, 'businesses', businessId));
+        if (businessSnap.exists()) setBusiness(businessSnap.data());
 
-      const slotSnap = await getDocs(collection(db, 'businesses', businessId, 'slots'));
-      const slotList = slotSnap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(slot => slot.is_active !== false);
-      setSlots(slotList);
-      checkSlotConflicts(slotList, date);
+        const slotSnap = await getDocs(collection(db, 'businesses', businessId, 'slots'));
+        const slotList = slotSnap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(slot => slot.is_active !== false);
+        setSlots(slotList);
+        await checkSlotConflicts(slotList, date);
+      } catch (error) {
+        console.error('Error fetching booking data:', error);
+        Alert.alert('Error', 'Failed to load booking information.');
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [businessId]);
 
   useEffect(() => {
-    checkSlotConflicts(slots, date);
+    if (slots.length > 0) {
+      checkSlotConflicts(slots, date);
+    }
   }, [date]);
 
   const checkSlotConflicts = async (slotList, selectedDate) => {
     const availability = {};
+    const nextTimes = {};
+
     for (let slot of slotList) {
       const q = query(
         collection(db, 'appointments'),
@@ -68,6 +75,7 @@ export default function BookingScreen({ route, navigation }) {
         where('status', 'in', ['pending', 'confirmed'])
       );
       const snapshot = await getDocs(q);
+
       const startTime = selectedDate;
       const endTime = new Date(startTime.getTime() + slot.duration_min * 60000);
       const isConflicting = snapshot.docs.some(docSnap => {
@@ -78,9 +86,45 @@ export default function BookingScreen({ route, navigation }) {
           : new Date(existingStart.getTime() + slot.duration_min * 60000);
         return startTime < existingEnd && existingStart < endTime;
       });
+
       availability[slot.id] = !isConflicting;
+
+      if (isConflicting) {
+        const nextAvailable = await findNextAvailableTime(slot, slot.duration_min);
+        nextTimes[slot.id] = nextAvailable;
+      }
     }
+
     setSlotAvailability(availability);
+    setSlotNextAvailableTime(nextTimes);
+  };
+
+  const findNextAvailableTime = async (slot, durationMin) => {
+    const now = DateTime.now().setZone('Europe/Helsinki');
+    for (let i = 1; i <= 96; i++) {
+      const raw = now.plus({ minutes: i * 15 }).toJSDate();
+      const start = roundToNextQuarterHour(raw);
+      const end = new Date(start.getTime() + durationMin * 60000);
+
+      const q = query(
+        collection(db, 'appointments'),
+        where('slot_id', '==', slot.id),
+        where('status', 'in', ['pending', 'confirmed'])
+      );
+      const snapshot = await getDocs(q);
+
+      const isConflicting = snapshot.docs.some(docSnap => {
+        const existing = docSnap.data();
+        const existingStart = new Date(existing.start_time.seconds * 1000);
+        const existingEnd = existing.end_time
+          ? new Date(existing.end_time.seconds * 1000)
+          : new Date(existingStart.getTime() + durationMin * 60000);
+        return start < existingEnd && existingStart < end;
+      });
+
+      if (!isConflicting) return start;
+    }
+    return null;
   };
 
   const handleBooking = async () => {
@@ -108,7 +152,7 @@ export default function BookingScreen({ route, navigation }) {
       end_time: endTime,
       saved_at: serverTimestamp(),
       status: 'pending',
-      note: '',
+      note: note,
       google_event_id: ''
     });
 
@@ -127,15 +171,21 @@ export default function BookingScreen({ route, navigation }) {
     setPickerVisible(false);
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {business && (
-        <>
-          <View style={styles.businessBanner}>
-            <Text style={styles.businessName}>{business.name}</Text>
-            <Text style={styles.businessDescription}>{business.description}</Text>
-          </View>
-        </>
+        <View style={styles.businessBanner}>
+          <Text style={styles.businessName}>{business.name}</Text>
+          <Text style={styles.businessDescription}>{business.description}</Text>
+        </View>
       )}
 
       <Text style={styles.sectionTitle}>Select starting time</Text>
@@ -165,7 +215,10 @@ export default function BookingScreen({ route, navigation }) {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           const isAvailable = slotAvailability[item.id];
-          const nextAvailable = new Date(date.getTime() + item.duration_min * 60000);
+          const displayTime = isAvailable
+            ? date.toLocaleTimeString()
+            : slotNextAvailableTime[item.id]?.toLocaleTimeString?.() || 'N/A';
+
           return (
             <TouchableOpacity
               style={[
@@ -177,20 +230,30 @@ export default function BookingScreen({ route, navigation }) {
               disabled={!isAvailable}
             >
               <Text style={styles.slotText}>
-                {isAvailable
-                  ? `${item.name} (${nextAvailable.toLocaleTimeString()})`
-                  : `${item.name} (Unavailable)` }
+                {`${item.name} (${displayTime})`}
               </Text>
             </TouchableOpacity>
           );
         }}
       />
 
+      <Text style={styles.sectionTitle}>Leave a note (Optional)</Text>
+      <View style={styles.noteInputContainer}>
+        <TextInput
+          style={styles.noteInput}
+          placeholder="Please leave a note here."
+          value={note}
+          onChangeText={setNote}
+          multiline
+          numberOfLines={3}
+        />
+      </View>
+
       <Button
         title="Book"
         onPress={handleBooking}
         disabled={!selectedSlot}
-        color="#000" // Black color for the "Book" button
+        color="#000"
       />
     </View>
   );
@@ -199,7 +262,7 @@ export default function BookingScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { padding: 16, flex: 1 },
   businessBanner: {
-    backgroundColor: '#343a40', // Black background for the business section
+    backgroundColor: '#343a40',
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 16,
@@ -228,33 +291,46 @@ const styles = StyleSheet.create({
   datePickerButton: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#fff', // White background for the button
+    backgroundColor: '#fff',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   datePickerButtonText: {
-    color: '#000', // Black color for the text inside the button
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
   },
   slotButton: {
-    backgroundColor: '#000', // Black background for slot buttons
+    backgroundColor: '#000',
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
     alignItems: 'center',
   },
   slotButtonSelected: {
-    backgroundColor: '#4CAF50', // Green when selected
+    backgroundColor: '#4CAF50',
   },
   slotButtonUnavailable: {
-    backgroundColor: '#D3D3D3', // Gray when unavailable
-    opacity: 0.6, // Add blur effect
+    backgroundColor: '#D3D3D3',
+    opacity: 0.6,
   },
   slotText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  noteInputContainer: {
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  noteInput: {
+    padding: 12,
+    fontSize: 14,
+    color: '#000',
+    textAlignVertical: 'top',
   },
 });

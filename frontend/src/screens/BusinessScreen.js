@@ -1,3 +1,5 @@
+// src/screens/BusinessScreen.js
+
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, Button, TextInput, FlatList, StyleSheet,
@@ -110,7 +112,7 @@ export default function BusinessScreen({ route, navigation }) {
         <Text style={styles.reminderText}>Business Info</Text>
       </View>
 
-      {business.image_url && (
+      {business?.image_url && (
         <Image source={{ uri: business.image_url }} style={styles.coverImage} />
       )}
 
@@ -138,14 +140,14 @@ export default function BusinessScreen({ route, navigation }) {
         </>
       ) : (
         <View>
-          <Text>Name: {business.name}</Text>
-          <Text>Description: {business.description}</Text>
-          <Text>Location: {business.location}</Text>
-          <Text>Contact: {business.contact_email}</Text>
-          <Text>Phone: {business.contact_phone}</Text>
+          <Text>Name: {business?.name}</Text>
+          <Text>Description: {business?.description}</Text>
+          <Text>Location: {business?.location}</Text>
+          <Text>Contact: {business?.contact_email}</Text>
+          <Text>Phone: {business?.contact_phone}</Text>
           <Text style={{ marginTop: 8 }}>Categories:</Text>
           {categories
-            .filter(cat => (business.category_ids || []).includes(cat.id))
+            .filter(cat => (business?.category_ids || []).includes(cat.id))
             .map(cat => <Text key={cat.id}>• {cat.name}</Text>)}
 
           {isOwner && (
@@ -192,11 +194,19 @@ export default function BusinessScreen({ route, navigation }) {
         data={showServices ? slots : []}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <View style={styles.slotCard}>
+          <TouchableOpacity
+            style={styles.slotCard}
+            onPress={() => navigation.navigate('SlotScreen', { businessId, slotId: item.id })}
+          >
             <Text style={{ fontWeight: 'bold' }}>{item.name}</Text>
             <Text>{item.description}</Text>
             <Text>Duration: {item.duration_min} min</Text>
-          </View>
+            <Text>Status: {item.is_active ? 'Active' : 'Inactive'}</Text>
+
+            <View style={styles.viewButton}>
+              <Text style={styles.viewButtonText}>View Detail</Text>
+            </View>
+          </TouchableOpacity>
         )}
         ListEmptyComponent={showServices ? <Text>No services yet</Text> : null}
         contentContainerStyle={styles.container}
@@ -253,10 +263,21 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   slotCard: {
-    padding: 8,
+    padding: 12,
     marginBottom: 12,
     backgroundColor: '#eaeaea',
     borderRadius: 6,
+  },
+  viewButton: {
+    backgroundColor: '#2196f3',
+    marginTop: 10,
+    padding: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  viewButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   categoryButton: {
     padding: 10,
